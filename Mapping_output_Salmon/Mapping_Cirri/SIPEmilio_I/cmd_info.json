@@ -1,0 +1,11 @@
+{
+    "salmon_version": "0.9.1",
+    "index": "Documents/indexed_SALMON",
+    "libType": "A",
+    "mates1": "/ngsprojects/seminavis/data_archive/cDNA/conditioningEmilio/merged_reads/SIPEmilio_I/SIP5_S4_R1_001.fastq.gz",
+    "mates2": "/ngsprojects/seminavis/data_archive/cDNA/conditioningEmilio/merged_reads/SIPEmilio_I/SIP5_S4_R2_001.fastq.gz",
+    "threads": "2",
+    "output": "Documents/mapping_Emilio_V1.0/SIPEmilio_I",
+    "writeUnmappedNames": [],
+    "auxDir": "aux_info"
+}

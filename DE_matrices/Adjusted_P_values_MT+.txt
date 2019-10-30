@@ -1,0 +1,2 @@
+geneID genePval data genePadj
+1 Sro1010_g230870 8.02544042150615e-49 

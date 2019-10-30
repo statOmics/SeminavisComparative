@@ -1,0 +1,46 @@
+[2018-09-21 15:54:58.833] [jointLog] [info] parsing read library format
+[2018-09-21 15:54:58.833] [jointLog] [info] There is 1 library.
+[2018-09-21 15:54:58.953] [jointLog] [info] Loading Quasi index
+[2018-09-21 15:54:58.954] [jointLog] [info] Loading 32-bit quasi index
+[2018-09-21 15:55:05.596] [jointLog] [info] done
+[2018-09-21 15:55:05.596] [jointLog] [info] Index contained 36776 targets
+[2018-09-21 15:55:59.693] [fileLog] [info] 
+At end of round 0
+==================
+Observed 5356410 total fragments (5356410 in most recent round)
+
+[2018-09-21 15:55:59.691] [jointLog] [info] Computed 26230 rich equivalence classes for further processing
+[2018-09-21 15:55:59.691] [jointLog] [info] Counted 2620774 total reads in the equivalence classes 
+[2018-09-21 15:55:59.769] [jointLog] [warning] Only 2620774 fragments were mapped, but the number of burn-in fragments was set to 5000000.
+The effective lengths have been computed using the observed mappings.
+
+[2018-09-21 15:55:59.769] [jointLog] [info] Mapping rate = 48.9278%
+
+[2018-09-21 15:55:59.769] [jointLog] [info] finished quantifyLibrary()
+[2018-09-21 15:55:59.772] [jointLog] [info] Starting optimizer
+[2018-09-21 15:55:59.822] [jointLog] [info] Marked 0 weighted equivalence classes as degenerate
+[2018-09-21 15:55:59.829] [jointLog] [info] iteration = 0 | max rel diff. = 102.993
+[2018-09-21 15:55:59.867] [jointLog] [info] iteration 11, adjusting effective lengths to account for biases
+[2018-09-21 15:56:16.579] [jointLog] [info] Computed expected counts (for bias correction)
+[2018-09-21 15:56:16.580] [jointLog] [info] processed bias for 0.0% of the transcripts
+[2018-09-21 15:56:18.983] [jointLog] [info] processed bias for 10.0% of the transcripts
+[2018-09-21 15:56:21.362] [jointLog] [info] processed bias for 20.0% of the transcripts
+[2018-09-21 15:56:23.791] [jointLog] [info] processed bias for 30.0% of the transcripts
+[2018-09-21 15:56:26.119] [jointLog] [info] processed bias for 40.0% of the transcripts
+[2018-09-21 15:56:28.481] [jointLog] [info] processed bias for 50.0% of the transcripts
+[2018-09-21 15:56:30.934] [jointLog] [info] processed bias for 60.0% of the transcripts
+[2018-09-21 15:56:33.418] [jointLog] [info] processed bias for 100.0% of the transcripts
+[2018-09-21 15:56:33.634] [jointLog] [info] iteration = 100 | max rel diff. = 0.09158
+[2018-09-21 15:56:33.823] [jointLog] [info] iteration = 200 | max rel diff. = 0.0410737
+[2018-09-21 15:56:34.027] [jointLog] [info] iteration = 300 | max rel diff. = 0.027464
+[2018-09-21 15:56:34.247] [jointLog] [info] iteration = 400 | max rel diff. = 0.0183704
+[2018-09-21 15:56:34.492] [jointLog] [info] iteration = 500 | max rel diff. = 0.0153307
+[2018-09-21 15:56:34.708] [jointLog] [info] iteration = 600 | max rel diff. = 0.0153307
+[2018-09-21 15:56:34.731] [jointLog] [info] iteration = 617 | max rel diff. = 0.0099208
+[2018-09-21 15:56:34.735] [jointLog] [info] Finished optimizer
+[2018-09-21 15:56:34.735] [jointLog] [info] writing output 
+
+[2018-09-21 15:56:34.895] [jointLog] [warning] NOTE: Read Lib [( /ngsprojects/seminavis/data_archive/cDNA/conditioning/libraries/Libr15_lane1_1.fastq.gz, /ngsprojects/seminavis/data_archive/cDNA/conditioning/libraries/Libr15_lane1_2.fastq.gz )] :
+
+Greater than 5% of the fragments disagreed with the provided library type; check the file: /scratch/seminavis/largeScaleGeneExpression/conditioningSara/mappedReadsSalmonTrimmed2/Libr15_lane1/lib_format_counts.json for details
+

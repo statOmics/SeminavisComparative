@@ -1,0 +1,44 @@
+[2018-09-21 16:16:13.852] [jointLog] [info] parsing read library format
+[2018-09-21 16:16:13.852] [jointLog] [info] There is 1 library.
+[2018-09-21 16:16:13.943] [jointLog] [info] Loading Quasi index
+[2018-09-21 16:16:13.943] [jointLog] [info] Loading 32-bit quasi index
+[2018-09-21 16:16:20.684] [jointLog] [info] done
+[2018-09-21 16:16:20.684] [jointLog] [info] Index contained 36776 targets
+[2018-09-21 16:17:20.200] [fileLog] [info] 
+At end of round 0
+==================
+Observed 5129000 total fragments (5129000 in most recent round)
+
+[2018-09-21 16:17:20.199] [jointLog] [info] Computed 29496 rich equivalence classes for further processing
+[2018-09-21 16:17:20.199] [jointLog] [info] Counted 4118668 total reads in the equivalence classes 
+[2018-09-21 16:17:20.330] [jointLog] [warning] Only 4118668 fragments were mapped, but the number of burn-in fragments was set to 5000000.
+The effective lengths have been computed using the observed mappings.
+
+[2018-09-21 16:17:20.330] [jointLog] [info] Mapping rate = 80.3016%
+
+[2018-09-21 16:17:20.330] [jointLog] [info] finished quantifyLibrary()
+[2018-09-21 16:17:20.344] [jointLog] [info] Starting optimizer
+[2018-09-21 16:17:20.408] [jointLog] [info] Marked 0 weighted equivalence classes as degenerate
+[2018-09-21 16:17:20.411] [jointLog] [info] iteration = 0 | max rel diff. = 131.979
+[2018-09-21 16:17:20.487] [jointLog] [info] iteration 11, adjusting effective lengths to account for biases
+[2018-09-21 16:17:51.025] [jointLog] [info] Computed expected counts (for bias correction)
+[2018-09-21 16:17:51.025] [jointLog] [info] processed bias for 0.0% of the transcripts
+[2018-09-21 16:17:55.408] [jointLog] [info] processed bias for 10.0% of the transcripts
+[2018-09-21 16:17:59.393] [jointLog] [info] processed bias for 20.0% of the transcripts
+[2018-09-21 16:18:03.268] [jointLog] [info] processed bias for 30.0% of the transcripts
+[2018-09-21 16:18:07.079] [jointLog] [info] processed bias for 40.0% of the transcripts
+[2018-09-21 16:18:10.052] [jointLog] [info] processed bias for 50.0% of the transcripts
+[2018-09-21 16:18:12.581] [jointLog] [info] processed bias for 60.0% of the transcripts
+[2018-09-21 16:18:15.094] [jointLog] [info] processed bias for 70.0% of the transcripts
+[2018-09-21 16:18:17.170] [jointLog] [info] processed bias for 100.0% of the transcripts
+[2018-09-21 16:18:17.390] [jointLog] [info] iteration = 100 | max rel diff. = 0.174746
+[2018-09-21 16:18:17.637] [jointLog] [info] iteration = 200 | max rel diff. = 0.0335767
+[2018-09-21 16:18:17.862] [jointLog] [info] iteration = 300 | max rel diff. = 0.0308908
+[2018-09-21 16:18:18.105] [jointLog] [info] iteration = 400 | max rel diff. = 0.0135853
+[2018-09-21 16:18:18.356] [jointLog] [info] iteration = 500 | max rel diff. = 0.036571
+[2018-09-21 16:18:18.550] [jointLog] [info] iteration = 600 | max rel diff. = 0.01289
+[2018-09-21 16:18:18.737] [jointLog] [info] iteration = 700 | max rel diff. = 0.0115496
+[2018-09-21 16:18:18.833] [jointLog] [info] iteration = 750 | max rel diff. = 0.00971577
+[2018-09-21 16:18:18.837] [jointLog] [info] Finished optimizer
+[2018-09-21 16:18:18.837] [jointLog] [info] writing output 
+

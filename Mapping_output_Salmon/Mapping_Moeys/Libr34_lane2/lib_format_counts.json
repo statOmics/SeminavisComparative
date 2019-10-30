@@ -1,0 +1,21 @@
+{
+    "read_files": "( /ngsprojects/seminavis/data_archive/cDNA/conditioning/libraries/Libr34_lane2_1.fastq.gz, /ngsprojects/seminavis/data_archive/cDNA/conditioning/libraries/Libr34_lane2_2.fastq.gz )",
+    "expected_format": "ISR",
+    "compatible_fragment_ratio": 0.9695466760641766,
+    "num_compatible_fragments": 2013890,
+    "num_assigned_fragments": 2077146,
+    "num_consistent_mappings": 2093299,
+    "num_inconsistent_mappings": 66190,
+    "MSF": 0,
+    "OSF": 2,
+    "ISF": 19295,
+    "MSR": 0,
+    "OSR": 1850,
+    "ISR": 2093299,
+    "SF": 735,
+    "SR": 44245,
+    "MU": 0,
+    "OU": 0,
+    "IU": 0,
+    "U": 0
+}

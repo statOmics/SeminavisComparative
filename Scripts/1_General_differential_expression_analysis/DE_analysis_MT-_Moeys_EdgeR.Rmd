@@ -1,0 +1,257 @@
+---
+title: "Analysis_Sara_revisited"
+author: "Gust Bilcke"
+date: "17 augustus 2018"
+output: html_document
+---
+
+# Import & change data
+```{r include=FALSE}
+library(edgeR) ; library(stageR) ; library(tximport) ; library(readr) ;library(xlsx);library(ggplot2); library(xlsx)
+
+wd <- getwd()
+dir <- dirname(dirname(wd))
+
+quantFilesSara = list.files(paste0(dir,"/Mapping_output_Salmon/Mapping_Moeys/"))
+load(paste0(dir,"/Metadata/tx2gene.rda"))
+
+## try http:// if https:// URLs are not supported
+dataSara = tximport(files=paste0(dir,"/Mapping_output_Salmon/Mapping_Moeys/",quantFilesSara,"/quant.sf"), type="salmon", txOut=FALSE, tx2gene=tx2gene, importer=read_tsv)
+countsSara=dataSara$counts
+colnames(countsSara) = quantFilesSara
+## sum counts across lanes for Sara's dataset.
+countsSara = countsSara[,seq(1,41,by=2)] + countsSara[,seq(2,42,by=2)]
+
+conditions <- read.delim(paste0(dir, "/Metadata/conditions_Moeys.txt"))
+rownames(conditions) <- unlist(lapply(strsplit(as.character(conditions$files),split="_"),function(x) paste(x[1:2],collapse = "_")))
+timeSara = conditions$time[match(colnames(countsSara),rownames(conditions))]
+timeSara = as.character(timeSara)
+timeSara[timeSara=="3h"] <- 3
+timeSara[timeSara=="1h"] <- 1
+timeSara[timeSara=="15m"] <- 0.25
+timeSara <- as.numeric(timeSara)
+treatSara = conditions$treatment[match(colnames(countsSara),rownames(conditions))]
+treatSara <- (c("t","c"))[as.numeric(treatSara)] #control-treatment coding as in Gust's experiment
+
+metaData = read.xlsx(paste0(dir, "/Metadata/metadata_Moeys.xlsx"), sheetIndex=1, rowIndex=1:22, colIndex=1:9, header=TRUE)
+metaData$UNIQUE.SAMPLE.NUMBER = as.character(metaData$UNIQUE.SAMPLE.NUMBER)
+metaData$UNIQUE.SAMPLE.NUMBER = sub(x=metaData$UNIQUE.SAMPLE.NUMBER ,pattern="[a-z]+",replacement="")
+metaData$UNIQUE.SAMPLE.NUMBER = as.numeric(metaData$UNIQUE.SAMPLE.NUMBER)
+conditions$lib=as.factor(paste("L",sapply(rownames(conditions),function(x) substr(strsplit(x,"_")[[1]][1],5,7)),sep=""))
+target1 = conditions[conditions$lane==1,]
+target1$lib = sub(x=target1$lib,pattern="L",replacement="")
+allData = merge(x=metaData, y=target1, by.x="UNIQUE.SAMPLE.NUMBER", by.y="lib")
+
+conditions$lib2 =  sub(x=conditions$lib,pattern="L",replacement="")
+matchID = match(x=conditions$lib2,table=allData$UNIQUE.SAMPLE.NUMBER)
+conditions$week = allData$SAMPLE.NAME[matchID]
+conditions$week = as.character(conditions$week)
+conditions$week = factor(as.numeric(sapply(1:length(conditions$week), function(i) substr(conditions$week[i],start=nchar(conditions$week[i]),stop=nchar(conditions$week[i])))))
+weekSara <- as.character(conditions$week[match(colnames(countsSara),rownames(conditions))])
+```
+
+# filter and normalize
+```{r}
+d_nofil <- DGEList(countsSara)
+
+# Save CPMs without filtering for plotting
+cpms_wo_filtering <- cpm(d_nofil)
+condition <- paste0(weekSara, treatSara, timeSara)
+colnames(cpms_wo_filtering) <- condition
+write.table(cpms_wo_filtering, "CPM_MIN_no_filtering.txt", quote = F, row.names = T, col.names = T)
+
+keep <- rowSums(cpm(countsSara)>1)>=3
+table(keep)
+countsSara <- countsSara[keep,]
+
+d <- DGEList(countsSara)
+d <- calcNormFactors(d)
+```
+# model design
+```{r}
+treatTime <- factor(paste0("t",timeSara,"_",treatSara))
+treatTime = relevel(treatTime,ref="t0_c")
+design <- model.matrix(~treatTime+weekSara)
+
+colnames(countsSara) <- treatTime
+
+```
+
+# MDS plot
+```{r}
+t<- plotMDS(d,col=as.numeric(factor(timeSara)),pch=c(9,20)[as.numeric(factor(treatSara))])
+legend("center", c("0m","15m","1h","3h"), pch=20, col=as.numeric(factor(timeSara))[1:6])
+
+treat2 <- treatSara
+treat2[treat2 == "c"] <- "control"
+treat2[treat2 == "t"] <- "SIP+ treated"
+
+time2 <- as.factor(timeSara)
+
+
+MDS_df <- data.frame(t$x, t$y)
+
+ggplot(data = MDS_df) +
+  geom_point(aes(x = t.x, y = t.y,  fill = time2,  shape = treat2), size = 3)  +
+  theme_classic() +
+  theme(legend.box="horizontal") +
+  scale_shape_manual(values = c(21,23))+
+  scale_fill_manual(values= c("grey20",  "orange","firebrick3", "olivedrab3")) +
+  guides(fill = guide_legend(override.aes=list(shape=21)), shape = guide_legend(override.aes=list(fill = "black"))) +
+  theme(legend.position = c(0.5, 0.55)) +
+  labs(fill = "Time (h)", shape = "Treatment") +
+  xlab("Leading logFC dim1") +
+  ylab("Leading logFC dim2")
+
+#ggsave("plots/MDS_min.pdf" ,width = 6, height = 4)
+
+```
+
+# model fitting
+```{r}
+d <- DGEList(countsSara)
+d <- calcNormFactors(d)
+d <- estimateDisp(d,design)
+plotBCV(d)
+
+fit <- glmFit(d,design)
+
+# check if the residuals follow a negative binomial distribution (Q-Q plot)
+gofStat <- gof(fit,plot=TRUE)
+```
+# Stagewise testing
+```{r}
+L <- matrix(0,nrow=ncol(fit$coefficients),ncol=3)
+dimnames(L) <- list(colnames(fit$coefficients),c("t15","t1","t3"))
+L[c("treatTimet0.25_t","treatTimet0.25_c"),1] <- c(1,-1)
+L[c("treatTimet1_t","treatTimet1_c"),2] <- c(1,-1)
+L[c("treatTimet3_t","treatTimet3_c"),3] <- c(1,-1)
+lrtAll <- glmLRT(fit,contrast=L)
+pScreen <- lrtAll$table$PValue
+names(pScreen) <- rownames(lrtAll)
+lrtList <- list()
+for(i in 1:ncol(L)) lrtList[[i]] <- glmLRT(fit,contrast=L[,i])
+pConfirmation <- do.call(cbind,lapply(lrtList,function(x) x$table$PValue))
+dimnames(pConfirmation) <- list(rownames(lrtList[[1]]),colnames(L))
+stageRObj <- stageR(pScreen, pConfirmation)
+stageRObj <- stageWiseAdjustment(stageRObj, method="holm", alpha=0.05)
+res <- getResults(stageRObj)
+stagewise_numbers <- colSums(res)
+stagewise_numbers
+```
+
+# all kinds of plots
+```{r}
+#################
+# volcano plot
+#################
+# with stageWise testing, this is not so straightforward (AdjP contains a lot of "1"s). What we can do is to plot the non-adjusted p-values and then just colour the significant genes (instead of drawing a line).
+pConfirmation <- as.data.frame(pConfirmation)
+
+AdjP <- as.data.frame(AdjP)
+
+logFcMatrix <-  as.data.frame(read.delim(paste0(dir,"/DE_Matrices/log2_Fold_Changes_MT-_Moeys.txt"), header = TRUE, sep = "", row.names = 1, stringsAsFactors = FALSE))
+
+res_ordered <- as.data.frame(res[match(rownames(logFcMatrix), rownames(res)),])
+
+library(tidyr)
+
+library(dplyr)
+
+FC_long <- gather(as.data.frame(logFcMatrix)[1:3], timepoint, logFC, t15:t3, factor_key = T)
+pConf_long <- gather(pConfirmation[1:3], timepoint, p_value, t15:t3, factor_key = T)
+res_long <- gather(res_ordered[2:4], timepoint,significant , t15:t3, factor_key = T)
+
+volcano <- data.frame(stringsAsFactors = F, as.factor(FC_long$timepoint), FC_long$logFC, pConf_long$p_value, res_long$significant)
+
+colnames(volcano) <- c("timepoint", "logFC", "p", "sign")
+
+volcano$sign[volcano$sign == 0] <- "no"
+volcano$sign[volcano$sign == 1] <- "yes"
+
+facet <- ggplot(volcano, aes(x=logFC, y=-log10(p))) +
+  geom_point(aes( colour = as.factor(sign)), size = 0.7)+
+  facet_grid(.~ timepoint)+
+  labs(col="significant")
+facet
+
+#####################
+# p-value histogram
+#####################
+# before multiple testing correction
+ggplot() +
+  geom_histogram(aes(x = pScreen, y = ..density..), color = "black", fill = "white", binwidth = 0.01) #+
+  #geom_density(aes(x = pScreen), alpha =.2, fill = "red")   # plots a smooth version on top
+
+# after multiple testing correction (for the first stage)
+ggplot() +
+  geom_histogram(aes(p.adjust(pScreen,"BH"), y = ..density..), color = "black", fill = "white", binwidth = 0.01)
+  #geom_density(aes(x = pScreen), alpha =.2, fill = "red")   # plots a smooth version on top
+
+# after multiple testing correction (for the second stages). As you can see,  there are indeed many p-values that end up being '1'
+AdjP_long <- gather(AdjP, timepoint, p_value, t15:t3, factor_key = T)
+
+
+pConf_long2 <- cbind(pConf_long, rep("before_MTC", nrow(pConf_long)))
+AdjP_long2 <- cbind(AdjP_long[2:3], rep("after_MTC", nrow(AdjP_long)))
+
+colnames(pConf_long2) <- c('timepoint', 'p_value', 'MTC')
+colnames(AdjP_long2) <-  c('timepoint', 'p_value', 'MTC')
+
+pConf_before_after <- rbind(pConf_long2, AdjP_long2)
+
+ggplot(data=pConf_before_after, aes(p_value)) +
+  geom_histogram( color = "black", fill = "white", binwidth = 0.05) +
+  #geom_freqpoly( color = "black", fill = "white") +
+  #geom_density( color = "black", fill = "cyan4") +
+  #geom_vline(xintercept = 0.05) +
+  facet_grid(MTC~ timepoint) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+#############
+# FC plots
+#############
+
+### GUSTS METHOD (for contrasts facetted)
+volcano$gene_ID <- rep(rownames(logFcMatrix), 3)
+
+names_t15 <- volcano$gene_ID[volcano$sign == "yes" & volcano$timepoint == "t15"]
+names_t1 <- volcano$gene_ID[volcano$sign == "yes" & volcano$timepoint == "t1"]
+names_t3 <- volcano$gene_ID[volcano$sign == "yes" & volcano$timepoint == "t3"]
+
+FCplots_t15 <- volcano[volcano$gene_ID %in% names_t15,]
+FCplots_t1 <- volcano[volcano$gene_ID %in% names_t1,]
+FCplots_t3 <- volcano[volcano$gene_ID %in% names_t3,]
+
+FCplots <- rbind(FCplots_t15, FCplots_t1, FCplots_t3)
+
+FCplots$timepoint <- sapply(as.character(FCplots$timepoint), function(x) substr(x, 2,nchar(x))) # remove the 't' from timepoint
+FCplots$timepoint[FCplots$timepoint == 15] <- 0.25  # change "15" into 0.25
+
+FCplots$facet <- as.factor(c(rep("t15", length(names_t15)*3),rep("t1", length(names_t1)*3),rep("t3", length(names_t3)*3)))
+FCplots$facet <- relevel(as.factor(FCplots$facet), "t15")
+
+FCplot <- ggplot(data = FCplots, aes(x = as.numeric(timepoint), y = logFC, group = gene_ID)) +
+    geom_line(size = 0.5, alpha = 0.1) +
+    geom_hline(aes(yintercept = 0), size= 1, linetype = "dashed") +
+   xlab("Time (hours)") +
+   ylab("Log2(FC)") +
+  scale_x_continuous(breaks=c(0.25, 1,3,6,9), minor_breaks = NULL) +
+ facet_grid(~ facet) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+FCplot
+
+
+FCplot2 <- ggplot(data = FCplots, aes(x = as.numeric(timepoint), y = logFC, group = gene_ID)) +
+    geom_line(size = 0.5, alpha = 0.1) +
+    geom_hline(aes(yintercept = 0), size= 0.5, linetype = "dashed", color = "firebrick4") +
+   xlab("Time (hours)") +
+   ylab("Log2(FC)") +
+  scale_x_continuous(breaks=c(0.25, 1,3,6,9), minor_breaks = NULL) +
+ facet_grid(facet ~ .) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5), strip.text.y = element_text(angle=0))
+
+FCplot2
+```
+

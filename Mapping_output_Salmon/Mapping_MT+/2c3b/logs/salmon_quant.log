@@ -1,0 +1,82 @@
+[2018-02-15 12:24:04.881] [jointLog] [info] parsing read library format
+[2018-02-15 12:24:04.881] [jointLog] [info] There is 1 library.
+[2018-02-15 12:24:05.018] [jointLog] [info] Loading Quasi index
+[2018-02-15 12:24:05.019] [jointLog] [info] Loading 32-bit quasi index
+[2018-02-15 12:24:14.649] [jointLog] [info] done
+[2018-02-15 12:24:14.649] [jointLog] [info] Index contained 36776 targets
+[2018-02-15 12:26:51.094] [jointLog] [info] Computed 34216 rich equivalence classes for further processing
+[2018-02-15 12:26:51.094] [jointLog] [info] Counted 22631670 total reads in the equivalence classes 
+[2018-02-15 12:26:51.107] [jointLog] [info] Mapping rate = 80.9866%
+
+[2018-02-15 12:26:51.107] [jointLog] [info] finished quantifyLibrary()
+[2018-02-15 12:26:51.111] [jointLog] [info] Starting optimizer
+[2018-02-15 12:26:51.095] [fileLog] [info] 
+At end of round 0
+==================
+Observed 27944954 total fragments (27944954 in most recent round)
+
+[2018-02-15 12:26:51.148] [jointLog] [info] Marked 0 weighted equivalence classes as degenerate
+[2018-02-15 12:26:51.150] [jointLog] [info] iteration = 0 | max rel diff. = 316.604
+[2018-02-15 12:26:51.344] [jointLog] [info] iteration = 100 | max rel diff. = 0.100862
+[2018-02-15 12:26:51.527] [jointLog] [info] iteration = 200 | max rel diff. = 0.051408
+[2018-02-15 12:26:51.707] [jointLog] [info] iteration = 300 | max rel diff. = 0.0303142
+[2018-02-15 12:26:51.870] [jointLog] [info] iteration = 400 | max rel diff. = 0.0245289
+[2018-02-15 12:26:52.043] [jointLog] [info] iteration = 500 | max rel diff. = 0.0190461
+[2018-02-15 12:26:52.213] [jointLog] [info] iteration = 600 | max rel diff. = 0.0146633
+[2018-02-15 12:26:52.402] [jointLog] [info] iteration = 700 | max rel diff. = 0.0119676
+[2018-02-15 12:26:52.553] [jointLog] [info] iteration = 800 | max rel diff. = 0.0119676
+[2018-02-15 12:26:52.671] [jointLog] [info] iteration = 867 | max rel diff. = 0.00957786
+[2018-02-15 12:26:52.688] [jointLog] [info] Finished optimizer
+[2018-02-15 12:26:52.688] [jointLog] [info] writing output 
+
+[2018-02-15 12:26:52.823] [jointLog] [warning] NOTE: Read Lib [( /ngsprojects/seminavis/data_archive/cDNA/conditioningGust/2479_2/2c3b_R1.fastq.gz, /ngsprojects/seminavis/data_archive/cDNA/conditioningGust/2479_2/2c3b_R2.fastq.gz )] :
+
+Greater than 5% of the fragments disagreed with the provided library type; check the file: /scratch/seminavis/largeScaleGeneExpression/conditioningGust/mappedReadsSalmon/2c3b/lib_format_counts.json for details
+
+[2018-02-15 22:20:32.774] [jointLog] [info] parsing read library format
+[2018-02-15 22:20:32.774] [jointLog] [info] There is 1 library.
+[2018-02-15 22:20:33.066] [jointLog] [info] Loading Quasi index
+[2018-02-15 22:20:33.066] [jointLog] [info] Loading 32-bit quasi index
+[2018-02-15 22:20:40.439] [jointLog] [info] done
+[2018-02-15 22:20:40.439] [jointLog] [info] Index contained 36776 targets
+[2018-02-15 22:24:49.038] [fileLog] [info] 
+At end of round 0
+==================
+Observed 27944954 total fragments (27944954 in most recent round)
+
+[2018-02-15 22:24:49.036] [jointLog] [info] Computed 34216 rich equivalence classes for further processing
+[2018-02-15 22:24:49.036] [jointLog] [info] Counted 22631670 total reads in the equivalence classes 
+[2018-02-15 22:24:49.155] [jointLog] [info] Mapping rate = 80.9866%
+
+[2018-02-15 22:24:49.155] [jointLog] [info] finished quantifyLibrary()
+[2018-02-15 22:24:49.164] [jointLog] [info] Starting optimizer
+[2018-02-15 22:24:49.265] [jointLog] [info] Marked 0 weighted equivalence classes as degenerate
+[2018-02-15 22:24:49.267] [jointLog] [info] iteration = 0 | max rel diff. = 316.601
+[2018-02-15 22:24:49.309] [jointLog] [info] iteration 11, adjusting effective lengths to account for biases
+[2018-02-15 22:25:30.338] [jointLog] [info] Computed expected counts (for bias correction)
+[2018-02-15 22:25:30.338] [jointLog] [info] processed bias for 0.0% of the transcripts
+[2018-02-15 22:25:33.537] [jointLog] [info] processed bias for 10.0% of the transcripts
+[2018-02-15 22:25:36.530] [jointLog] [info] processed bias for 20.0% of the transcripts
+[2018-02-15 22:25:39.630] [jointLog] [info] processed bias for 30.0% of the transcripts
+[2018-02-15 22:25:42.709] [jointLog] [info] processed bias for 40.0% of the transcripts
+[2018-02-15 22:25:45.866] [jointLog] [info] processed bias for 50.0% of the transcripts
+[2018-02-15 22:25:49.133] [jointLog] [info] processed bias for 60.0% of the transcripts
+[2018-02-15 22:25:52.589] [jointLog] [info] processed bias for 70.0% of the transcripts
+[2018-02-15 22:25:56.114] [jointLog] [info] processed bias for 80.0% of the transcripts
+[2018-02-15 22:25:58.575] [jointLog] [info] processed bias for 100.0% of the transcripts
+[2018-02-15 22:25:58.986] [jointLog] [info] iteration = 100 | max rel diff. = 0.101972
+[2018-02-15 22:25:59.552] [jointLog] [info] iteration = 200 | max rel diff. = 0.112778
+[2018-02-15 22:26:00.028] [jointLog] [info] iteration = 300 | max rel diff. = 0.0280906
+[2018-02-15 22:26:00.531] [jointLog] [info] iteration = 400 | max rel diff. = 0.0195223
+[2018-02-15 22:26:01.016] [jointLog] [info] iteration = 500 | max rel diff. = 0.0343603
+[2018-02-15 22:26:01.528] [jointLog] [info] iteration = 600 | max rel diff. = 0.0156224
+[2018-02-15 22:26:02.012] [jointLog] [info] iteration = 700 | max rel diff. = 0.0119809
+[2018-02-15 22:26:02.560] [jointLog] [info] iteration = 800 | max rel diff. = 0.0119809
+[2018-02-15 22:26:02.993] [jointLog] [info] iteration = 899 | max rel diff. = 0.00960524
+[2018-02-15 22:26:03.001] [jointLog] [info] Finished optimizer
+[2018-02-15 22:26:03.001] [jointLog] [info] writing output 
+
+[2018-02-15 22:26:03.246] [jointLog] [warning] NOTE: Read Lib [( /ngsprojects/seminavis/data_archive/cDNA/conditioningGust/2479_2/2c3b_R1.fastq.gz, /ngsprojects/seminavis/data_archive/cDNA/conditioningGust/2479_2/2c3b_R2.fastq.gz )] :
+
+Greater than 5% of the fragments disagreed with the provided library type; check the file: /scratch/seminavis/largeScaleGeneExpression/conditioningGust/mappedReadsSalmon/2c3b/lib_format_counts.json for details
+

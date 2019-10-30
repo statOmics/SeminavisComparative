@@ -1,0 +1,21 @@
+{
+    "read_files": "( /ngsprojects/seminavis/data_archive/cDNA/conditioningEmilio/merged_reads/CtrlEmilio_III/C1_S3_R1_001.fastq.gz, /ngsprojects/seminavis/data_archive/cDNA/conditioningEmilio/merged_reads/CtrlEmilio_III/C1_S3_R2_001.fastq.gz )",
+    "expected_format": "ISR",
+    "compatible_fragment_ratio": 0.7723273190811524,
+    "num_compatible_fragments": 14396182,
+    "num_assigned_fragments": 18640001,
+    "num_consistent_mappings": 15039994,
+    "num_inconsistent_mappings": 4495837,
+    "MSF": 0,
+    "OSF": 475,
+    "ISF": 274851,
+    "MSR": 0,
+    "OSR": 16355,
+    "ISR": 15039994,
+    "SF": 77846,
+    "SR": 4124889,
+    "MU": 0,
+    "OU": 0,
+    "IU": 0,
+    "U": 0
+}

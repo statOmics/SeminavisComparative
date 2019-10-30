@@ -1,0 +1,37 @@
+[2019-07-10 10:48:48.088] [jointLog] [info] parsing read library format
+[2019-07-10 10:48:48.088] [jointLog] [info] There is 1 library.
+[2019-07-10 10:48:48.123] [jointLog] [info] Loading Quasi index
+[2019-07-10 10:48:48.123] [jointLog] [info] Loading 32-bit quasi index
+[2019-07-10 10:48:52.113] [jointLog] [info] done
+[2019-07-10 10:48:52.113] [jointLog] [info] Index contained 36776 targets
+[2019-07-10 10:48:53.137] [jointLog] [info] Automatically detected most likely library type as ISR
+[2019-07-10 10:52:36.481] [fileLog] [info] 
+At end of round 0
+==================
+Observed 22830803 total fragments (22830803 in most recent round)
+
+[2019-07-10 10:52:36.480] [jointLog] [info] Computed 34451 rich equivalence classes for further processing
+[2019-07-10 10:52:36.480] [jointLog] [info] Counted 18640001 total reads in the equivalence classes 
+[2019-07-10 10:52:36.481] [jointLog] [info] Mapping rate = 81.6441%
+
+[2019-07-10 10:52:36.481] [jointLog] [info] finished quantifyLibrary()
+[2019-07-10 10:52:36.494] [jointLog] [info] Starting optimizer
+[2019-07-10 10:52:36.512] [jointLog] [info] Marked 0 weighted equivalence classes as degenerate
+[2019-07-10 10:52:36.513] [jointLog] [info] iteration = 0 | max rel diff. = 336.254
+[2019-07-10 10:52:36.594] [jointLog] [info] iteration = 100 | max rel diff. = 0.090344
+[2019-07-10 10:52:36.674] [jointLog] [info] iteration = 200 | max rel diff. = 0.0400431
+[2019-07-10 10:52:36.755] [jointLog] [info] iteration = 300 | max rel diff. = 0.029163
+[2019-07-10 10:52:36.836] [jointLog] [info] iteration = 400 | max rel diff. = 0.0240746
+[2019-07-10 10:52:36.916] [jointLog] [info] iteration = 500 | max rel diff. = 0.0193878
+[2019-07-10 10:52:36.997] [jointLog] [info] iteration = 600 | max rel diff. = 0.0152364
+[2019-07-10 10:52:37.081] [jointLog] [info] iteration = 700 | max rel diff. = 0.0138599
+[2019-07-10 10:52:37.162] [jointLog] [info] iteration = 800 | max rel diff. = 0.0112897
+[2019-07-10 10:52:37.253] [jointLog] [info] iteration = 900 | max rel diff. = 0.0105343
+[2019-07-10 10:52:37.275] [jointLog] [info] iteration = 923 | max rel diff. = 0.00941718
+[2019-07-10 10:52:37.280] [jointLog] [info] Finished optimizer
+[2019-07-10 10:52:37.280] [jointLog] [info] writing output 
+
+[2019-07-10 10:52:37.414] [jointLog] [warning] NOTE: Read Lib [( /ngsprojects/seminavis/data_archive/cDNA/conditioningEmilio/merged_reads/CtrlEmilio_III/C1_S3_R1_001.fastq.gz, /ngsprojects/seminavis/data_archive/cDNA/conditioningEmilio/merged_reads/CtrlEmilio_III/C1_S3_R2_001.fastq.gz )] :
+
+Greater than 5% of the fragments disagreed with the provided library type; check the file: Documents/mapping_Emilio_V1.0/CtrlEmilio_III/lib_format_counts.json for details
+

@@ -1,0 +1,11 @@
+{
+    "salmon_version": "0.9.1",
+    "gcBias": [],
+    "writeUnmappedNames": [],
+    "index": "/scratch/seminavis/largeScaleGeneExpression/newGenome_20180209/indexHlp/",
+    "libType": "ISR",
+    "mates1": "/ngsprojects/seminavis/data_archive/cDNA/conditioning/libraries/Libr8_lane1_1.fastq.gz",
+    "mates2": "/ngsprojects/seminavis/data_archive/cDNA/conditioning/libraries/Libr8_lane1_2.fastq.gz",
+    "output": "/scratch/seminavis/largeScaleGeneExpression/conditioningSara/mappedReadsSalmonTrimmed2/Libr8_lane1",
+    "auxDir": "aux_info"
+}

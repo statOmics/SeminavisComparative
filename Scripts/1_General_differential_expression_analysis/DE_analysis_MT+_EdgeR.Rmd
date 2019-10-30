@@ -1,0 +1,452 @@
+---
+title: "DE analysis RNA-seq experiment novel data MT+"
+author: "Koen Van den Berge & Gust Bilcke"
+date: "16 February 2018"
+output: html_document
+---
+
+# Import
+
+```{r include=FALSE}
+library(edgeR) ; library(stageR) ; library(tximport) ; library(readr); library(ggplot2);library(tidyr)
+
+wd <- getwd()
+dir <- dirname(dirname(wd))
+
+quantFiles = list.files(paste0(dir,"/Mapping_output_Salmon/Mapping_MT+/"))
+
+load(paste0(dir,"/Metadata/tx2gene.rda"))
+data = tximport(files=paste0(dir,"/Mapping_output_Salmon/Mapping_MT+/",quantFiles,"/quant.sf"), type="salmon", txOut=FALSE, tx2gene=tx2gene, importer=read_tsv)
+countsGust=data$counts
+colnames(countsGust)=quantFiles
+colnames(countsGust)[29] <- "3c0a" #was misnamed 
+
+## remove technical replicate from run 2
+countsGust <- countsGust[,!colnames(countsGust)%in%"1c0a2"]
+d <- DGEList(countsGust)
+```
+
+# filter and normalize data
+```{r}
+## filter low expression counts and normalise
+keep <- rowSums(cpm(d)>1)>=3
+dont_keep <- rowSums(cpm(d)>1)< 3
+low_expression <- names(dont_keep)[dont_keep]
+
+#write.table(low_expression, paste0("low_expression_PLUS.txt") , row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+table(keep)
+d <- d[keep,]
+d$samples$lib.size <- colSums(d$counts)
+d <- edgeR::calcNormFactors(d)
+```
+
+
+# Experimental design
+```{r}
+## design
+week=substr(colnames(d),1,1)
+treat=substr(colnames(d),2,2)
+time=substr(colnames(d),3,nchar(colnames(d))-1)
+treatTime=factor(paste0(treat,"_",time))
+run=factor(
+    c(1, #1c0a
+      1, #1c15a
+      1, #1c1b
+      1, #1c3b
+      1, #1c6b
+      1, #1c9b
+      1, #1t15a
+      1, #1t1a
+      1, #1t3b
+      1, #1t6b
+      1, #1t9b
+      2, #2c0b
+      2, #2c15a
+      1, #2c15b
+      2, #2c1a
+      2, #2c3b
+      2, #2c6a
+      2, #2c9b
+      2, #2t15a
+      2, #2t1a
+      2, #2t3a
+      2, #2t6b
+      2, #2t9a
+      2, #3c1b
+      1, #3c3a
+      2, #3c6c
+      1, #3c9c
+      2, #3c0a
+      1, #3t15c
+      2, #3t1c
+      1, #3t3a
+      2, #3t6b
+      1)) #3t9a
+
+design <- model.matrix(~treatTime+week+run,contrasts.arg=list(week=contr.sum, run=contr.sum))
+rownames(design) <- colnames(d)
+```
+
+# MDS plot.
+
+The first plot colors by timepoint and the symbol is defined by the treatment.
+The second plot colors by combination of time $/times$ treatment.
+```{r}
+t <- plotMDS(d,col=as.numeric(factor(time)),pch=c(9,20)[as.numeric(factor(treat))])
+legend("center", c("0m","15m","1h","3h","6h","9h"), pch=20, col=as.numeric(factor(time))[1:6])
+#plotMDS(d,col=as.numeric(treatTime))
+
+# if you want to plot it in ggplot
+colfunc <- colorRampPalette(c("midnightblue","steelblue1", "grey50"))
+time2 <- time
+time2[time2 == "15"] <- 0.25
+
+treat2 <- treat
+treat2[treat2 == "c"] <- "control"
+treat2[treat2 == "t"] <- "SIP- treated"
+
+
+MDS_df <- data.frame(t$x, t$y)
+
+library(ggplot2)
+
+ggplot(data = MDS_df) +
+  geom_point(aes(x = t.x, y = t.y,  fill = time2,  shape = treat2), size = 3)  +
+  theme_classic() +
+  theme(legend.box="horizontal") +
+  scale_shape_manual(values = c(21,23))+
+  scale_fill_manual(values= c("grey20",  "orange","firebrick3", "olivedrab3", "cyan3", "mediumorchid3")) +
+  guides(fill = guide_legend(override.aes=list(shape=21)), shape = guide_legend(override.aes=list(fill = "black"))) +
+  theme(legend.position = c(0.5, 0.55)) +
+  labs(fill = "Time (h)", shape = "Treatment") +
+  xlab("Leading logFC dim1") +
+  ylab("Leading logFC dim2")
+```
+
+# Dispersion estimation, model fitting
+
+```{r}
+## estimate dispersion
+d <- estimateDisp(d,design)
+plotBCV(d)
+
+## fit model
+fit=glmFit(d,design)
+
+## check if the residuals follow a negative binomial distribution (Q-Q plot)
+gofStat <- gof(fit,plot=TRUE)
+```
+
+# Stage-wise hypothesis testing using stageR
+```{r}
+## contrast matrix
+L=matrix(0,nrow=ncol(coef(fit)),ncol=5)
+rownames(L)=colnames(coef(fit))
+colnames(L)=c("t15","t1","t3","t6","t9")#,
+	      #"avFC","lFC1","lFC2","eFC",
+	      #"lFC1-eFC","lFC2-eFC")
+L[c(7,2)+1,1] <- c(1,-1) #t15
+L[c(6,1)+1,2] <- c(1,-1) #t1
+L[c(8,3)+1,3] <- c(1,-1) #t3
+L[c(9,4)+1,4] <- c(1,-1) #t6
+L[c(10,5)+1,5] <- c(1,-1) #t9
+# L[2:11,6] <- rep(c(-1/5,1/5),each=5) #average FC
+# L[c(9,10,4,5),7] <- c(1/2,1/2,-1/2,-1/2) #late FC 1 (3h and 6h)
+# L[c(10,11,5,6),8] <- c(1/2,1/2,-1/2,-1/2) #late FC 2 (6h and 9h)
+# L[c(7,8,2,3),9] <- c(1/2,1/2,-1/2,-1/2) #early FC (15m and 1h)
+# L[,10] <- L[,7]-L[,9] #late FC1 vs early FC1
+# L[,11] <- L[,8]-L[,9] #late FC2 vs early FC1
+
+
+##screening stage: test over all contrasts of intrest
+alpha=0.05
+lrtF <- glmLRT(fit,contrast=L)
+ttF <- topTags(lrtF,n=Inf)
+pScreen=lrtF$table$PValue
+names(pScreen)=rownames(lrtF)
+genesStageI <- rownames(fit)[which(p.adjust(pScreen,"BH")<alpha)]
+length(genesStageI) #2195 (1%), 4037 (5%)
+
+## confirmation stage
+lrtList = list()
+for(i in 1:ncol(L)) lrtList[[i]] <- glmLRT(fit,contrast=L[,i])
+pConfirmation <- Reduce(lapply(lrtList,function(x) x$table$PValue),f=cbind)
+dimnames(pConfirmation) <- list(rownames(d),colnames(L))
+head(pConfirmation)
+stageRObj <- stageR(pScreen=pScreen, pConfirmation=pConfirmation)
+stageRObj <- stageWiseAdjustment(object=stageRObj, method="holm", alpha=alpha)
+#head(getAdjustedPValues(stageRObj, onlySignificantGenes=FALSE, order=FALSE))
+#head(getAdjustedPValues(stageRObj, onlySignificantGenes=TRUE, order=TRUE))
+res <- getResults(stageRObj)
+head(res)
+colSums(res)[2:6]
+
+
+
+AdjP <- getAdjustedPValues(stageRObj, onlySignificantGenes=F, order=TRUE)
+
+stagewise_numbers <- colSums(res) #nr of significant genes for every contrast on a x% OFDR level.
+
+# Gusts conventional analysis: on contrast level --> BH on every contrast (pConfirmation) separately
+conventional <- apply(pConfirmation, 2, function(x) p.adjust(x, "BH"))
+conventional_numbers <- colSums(conventional < 0.05)
+conventional_gene <- rowSums(conventional < 0.05)
+sum(conventional_gene > 0) # gene level genes for conventional analysis
+
+# Venn diagram
+gene_conv <- rownames(conventional)[conventional_gene > 0]
+```
+
+
+# All kind of plots
+
+```{r}
+#################
+# volcano plot
+#################
+# with stageWise testing, this is not so straightforward (AdjP contains a lot of "1"s). What we can do is to plot the non-adjusted p-values and then just colour the significant genes (instead of drawing a line).
+pConfirmation <- as.data.frame(pConfirmation)
+
+setwd(dir)
+logFcMatrix <-  as.data.frame(read.delim(paste0(dir,"/DE_Matrices/log2_Fold_Changes_MT+.txt"), header = TRUE, sep = "", row.names = 1, stringsAsFactors = FALSE))
+
+AdjP <- as.data.frame(AdjP)
+
+res_ordered <- as.data.frame(res[match(rownames(logFcMatrix), rownames(res)),])
+
+rownames(res_ordered) <- rownames(logFcMatrix)
+
+library(tidyr)
+
+FC_long <- gather(logFcMatrix[1:5], timepoint, logFC, t15:t9, factor_key = T)
+pConf_long <- gather(pConfirmation[1:5], timepoint, p_value, t15:t9, factor_key = T)
+res_long <- gather(res_ordered[2:6], timepoint,significant , t15:t9, factor_key = T)
+
+volcano <- data.frame(stringsAsFactors = F, as.factor(FC_long$timepoint), FC_long$logFC, pConf_long$p_value, res_long$significant)
+
+colnames(volcano) <- c("timepoint", "logFC", "p", "sign")
+
+volcano$sign[volcano$sign == 0] <- "no"
+volcano$sign[is.na(volcano$sign) ] <- "no"
+volcano$sign[volcano$sign == 1] <- "yes"
+
+facet <- ggplot(volcano, aes(x=logFC, y=-log10(p))) +
+  geom_point(aes( colour = as.factor(sign)), size = 0.7)+
+  facet_grid(.~ timepoint)+
+  labs(col="significant")
+facet
+
+
+#####################
+# p-value histogram
+#####################
+# before multiple testing correction
+ggplot() +
+  geom_histogram(aes(x = pScreen, y = ..density..), color = "black", fill = "white", binwidth = 0.01) #+
+  #geom_density(aes(x = pScreen), alpha =.2, fill = "red")   # plots a smooth version on top
+
+# after multiple testing correction (for the first stage)
+ggplot() +
+  geom_histogram(aes(p.adjust(pScreen,"BH"), y = ..density..), color = "black", fill = "white", binwidth = 0.01)
+  #geom_density(aes(x = pScreen), alpha =.2, fill = "red")   # plots a smooth version on top
+
+# after multiple testing correction (for the second stages). As you can see,  there are indeed many p-values that end up being '1'
+AdjP_long <- gather(AdjP, timepoint, p_value, t15:t9, factor_key = T)
+
+
+pConf_long2 <- cbind(pConf_long, rep("before_MTC", nrow(pConf_long)))
+AdjP_long2 <- cbind(AdjP_long[2:3], rep("after_MTC", nrow(AdjP_long)))
+
+colnames(pConf_long2) <- c('timepoint', 'p_value', 'MTC')
+colnames(AdjP_long2) <-  c('timepoint', 'p_value', 'MTC')
+
+pConf_before_after <- rbind(pConf_long2, AdjP_long2)
+
+ggplot(data=pConf_before_after, aes(p_value)) +
+  geom_histogram( color = "black", fill = "white", binwidth = 0.05) +
+  #geom_freqpoly( color = "black", fill = "white") +
+  #geom_density( color = "black", fill = "cyan4") +
+  #geom_vline(xintercept = 0.05) +
+  facet_grid(MTC~ timepoint) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
+#ggsave("plots/pvalue_distr.pdf")
+
+ggplot(data=pConf_before_after, aes(p_value)) +
+  #geom_histogram( color = "black", fill = "white", binwidth = 0.01) +
+  #geom_freqpoly( color = "black", fill = "white") +
+  geom_density( color = "black", fill = "cyan4") +
+  geom_vline(xintercept = 0.05) +
+  facet_grid(MTC~ timepoint)
+#ggsave("plots/pvalue_distr_density.pdf")
+
+#############
+# FC plots
+#############
+
+### KOENS METHOD
+
+#logFcMatrix <-  Reduce(lapply(lrtList,function(x) x$table$logFC),f=cbind)
+#write.table(logFcMatrix, "logFCmatrix_MT+.txt", row.names = TRUE, col.names = TRUE, quote = FALSE)
+#dimnames(logFcMatrix) <- list(rownames(fit),colnames(L))
+
+plotFc <- function(rownames){
+plot(x=1:5,y=logFcMatrix[rownames[1],1:5],ylab="log2(FC)",xlab="time", ylim=range(logFcMatrix[rownames,1:5]), type="n", xaxt="n")
+axis(1,at=1:5,labels=c("15min","1h","3h","6h","9h"))
+for(k in 1:length(rownames)) lines(x=1:5, y=logFcMatrix[rownames[k],1:5])
+abline(h=0,col=2,lwd=2)
+}
+
+plotFcTime <- function(rownames){
+plot(x=c(0.25,1,3,6,9),y=logFcMatrix[rownames[1],1:5],ylab="log2(FC)",xlab="time", ylim=range(logFcMatrix[rownames,1:5]), type="n", xaxt="n")
+axis(1,at=c(0.25,1,3,6,9),labels=c("15min","1h","3h","6h","9h"))
+for(k in 1:length(rownames)) lines(x=c(0.25,1,3,6,9), y=logFcMatrix[rownames[k],1:5])
+abline(h=0,col=2)
+}
+
+# looking at individual timepoints
+names(which(rowSums(res[,1:5])==5))
+# genes significant in all 5 timepoints
+plotFc(names(which(rowSums(res[,1:5])==5)))
+
+### GUSTS METHOD (for contrasts facetted)
+volcano$gene_ID <- rep(rownames(logFcMatrix), 5)
+
+names_t15 <- volcano$gene_ID[volcano$sign == "yes" & volcano$timepoint == "t15"]
+names_t1 <- volcano$gene_ID[volcano$sign == "yes" & volcano$timepoint == "t1"]
+names_t3 <- volcano$gene_ID[volcano$sign == "yes" & volcano$timepoint == "t3"]
+names_t6 <- volcano$gene_ID[volcano$sign == "yes" & volcano$timepoint == "t6"]
+names_t9 <- volcano$gene_ID[volcano$sign == "yes" & volcano$timepoint == "t9"]
+names_nocontrast <- rownames(res)[rowSums(res) == 1]
+
+
+FCplots_t15 <- volcano[volcano$gene_ID %in% names_t15,]
+FCplots_t1 <- volcano[volcano$gene_ID %in% names_t1,]
+FCplots_t3 <- volcano[volcano$gene_ID %in% names_t3,]
+FCplots_t6 <- volcano[volcano$gene_ID %in% names_t6,]
+FCplots_t9 <- volcano[volcano$gene_ID %in% names_t9,]
+FCplots_nocontrast <- volcano[volcano$gene_ID %in% names_nocontrast,]
+
+FCplots <- rbind(FCplots_t15, FCplots_t1, FCplots_t3, FCplots_t6, FCplots_t9, FCplots_nocontrast)
+
+
+FCplots$timepoint <- sapply(as.character(FCplots$timepoint), function(x) substr(x, 2,nchar(x))) # remove the 't' from timepoint
+FCplots$timepoint[FCplots$timepoint == 15] <- 0.25  # change "15" into 0.25
+
+
+
+FCplots$facet <- as.factor(c(rep("t15", length(names_t15)*5),rep("t1", length(names_t1)*5),rep("t3", length(names_t3)*5),rep("t6", length(names_t6)*5),rep("t9", length(names_t9)*5), rep("no contrast", length(names_nocontrast)*5)))
+
+FCplots$facet <- factor(FCplots$facet, levels(FCplots$facet)[c(1,3,2,4,5,6)] )
+
+
+FCplot <- ggplot(data = FCplots, aes(x = as.numeric(timepoint), y = logFC, group = gene_ID)) +
+    geom_line(size = 0.5, alpha = 0.1) +
+    geom_hline(aes(yintercept = 0), size= 1, linetype = "dashed") +
+   xlab("Time (hours)") +
+   ylab("Log2(FC)") +
+  ylim(-7.5, 7.5)+
+  scale_x_continuous(breaks=c(0.25, 1,3,6,9), minor_breaks = NULL) +
+ facet_grid(~ facet) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+
+FCplot
+
+
+FCplot2 <- ggplot(data = FCplots, aes(x = as.numeric(timepoint), y = logFC, group = gene_ID)) +
+    geom_line(size = 0.5, alpha = 0.06) +
+    geom_hline(aes(yintercept = 0), size= 0.5, linetype = "dashed", color = "firebrick4") +
+   xlab("Time (hours)") +
+   ylab("Log2(FC)") +
+  scale_x_continuous(breaks=c(0.25, 1,3,6,9), minor_breaks = NULL) +
+ facet_grid(facet ~ .) +
+  ylim(-7.5, 7.5) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5), strip.text.y = element_text(angle=0)) + theme(plot.background = element_rect(fill = "transparent", colour = NA))
+
+FCplot2
+
+```
+
+# Plotting all MT+ DE results in one plot (potentially for paper)
+
+```{r}
+library(cowplot)
+
+
+MDSplot <- ggplot(data = MDS_df) +
+  geom_point(aes(x = t.x, y = t.y,  fill = time2,  shape = treat2), size = 3)  +
+  theme_classic() +
+  theme(legend.box="horizontal") +
+  scale_shape_manual(values = c(21,23))+
+  scale_fill_manual(values= c("grey20",  "orange","firebrick3", "olivedrab3", "cyan3", "mediumorchid3")) +
+  guides(shape = guide_legend(override.aes=list(fill = "black")), fill = guide_legend(override.aes=list(shape=21))) +
+  theme(legend.position = c(0.52, 0.55),
+    legend.background = element_rect( size = 0.5, fill = "grey90", colour = "grey90"), legend.direction = "horizontal", legend.box = "vertical") +
+  labs(fill = "Time (h)", shape = "Treatment") +
+  xlab("Leading logFC dim1") +
+  ylab("Leading logFC dim2")
+MDSplot
+
+# I decided to not plot the 'no contrast' samples as you cannot clearly see what is going on and I think it will confuse people. We can explain about it in the text though
+
+FCplots <- FCplots[FCplots$facet != "no contrast",]
+
+FCplots$facet <- as.character(FCplots$facet)
+FCplots$facet[FCplots$facet == "t15"] <- "15min"
+FCplots$facet[FCplots$facet == "t1"] <- "1h"
+FCplots$facet[FCplots$facet == "t3"] <- "3h"
+FCplots$facet[FCplots$facet == "t6"] <- "6h"
+FCplots$facet[FCplots$facet == "t9"] <- "9h"
+FCplots$facet <- factor(FCplots$facet, levels = unique(FCplots$facet))
+
+FCplot2 <- ggplot(data = FCplots, aes(x = as.numeric(timepoint), y = logFC, group = gene_ID)) +
+    geom_line(size = 0.5, alpha = 0.15) +
+    geom_hline(aes(yintercept = 0), size= 0.5, linetype = "dashed", color = "firebrick4") +
+   xlab("Time (hours)") +
+  theme_bw() +
+   ylab("Log2(FC)") +
+  scale_x_continuous(breaks=c(0.25, 1,3,6,9), minor_breaks = NULL) +
+ facet_grid(facet ~ .) +
+#  coord_cartesian(ylim = c(-8,8)) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5), strip.text.y = element_text(angle=0), strip.background =element_rect(fill="white")) 
+
+
+prow <- plot_grid( MDSplot, FCplot2,
+           align = 'vh',
+           labels = c("A", "B"),
+           hjust = -1,
+           nrow = 1,
+           rel_widths=c(1,.5)
+)
+
+barDat1 <- data.frame(Timepoint=c("15min","1h","3h","6h","9h"), nrDE=colSums(res)[2:6])
+bar1 <- ggplot(data=barDat1, aes(x=Timepoint, y=nrDE)) + 
+  geom_bar(stat="identity", fill = "grey40") + 
+  ylab("Nr. of DE genes") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, size=8), strip.text.y = element_text(angle=0), axis.text.y = element_text(size=8), panel.border = element_blank(), axis.line = element_line()) 
+
+
+barTimeDE <- data.frame(nrTimePoints=1:5,
+                      nrGenes=sapply(1:5,function(i) sum(rowSums(res[,2:6])==i)))
+
+barTimeDE$nrTimePoints <- as.factor(barTimeDE$nrTimePoints)
+bar2 <- ggplot(data=barTimeDE, aes(x=nrTimePoints, y=nrGenes)) + 
+  geom_bar(stat="identity", fill = "grey40") + 
+  ylab("Nr. of genes") + 
+  theme_bw() +
+  xlab("Significant timepoints") +
+  theme(strip.text.y = element_text(angle=0),  panel.border = element_blank(), axis.line = element_line()) 
+
+barCol <- plot_grid( bar1, bar2,
+           align = 'vh',
+           labels = c("C", "D"),
+           hjust = -1,
+           nrow = 2,
+           ncol=1)
+
+allplots <- plot_grid(prow, barCol, rel_widths = c(1,0.25))
+
+```
+

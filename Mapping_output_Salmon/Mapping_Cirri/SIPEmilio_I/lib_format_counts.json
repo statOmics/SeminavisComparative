@@ -1,0 +1,21 @@
+{
+    "read_files": "( /ngsprojects/seminavis/data_archive/cDNA/conditioningEmilio/merged_reads/SIPEmilio_I/SIP5_S4_R1_001.fastq.gz, /ngsprojects/seminavis/data_archive/cDNA/conditioningEmilio/merged_reads/SIPEmilio_I/SIP5_S4_R2_001.fastq.gz )",
+    "expected_format": "ISR",
+    "compatible_fragment_ratio": 0.7618859320570756,
+    "num_compatible_fragments": 15911046,
+    "num_assigned_fragments": 20883764,
+    "num_consistent_mappings": 16594021,
+    "num_inconsistent_mappings": 5226942,
+    "MSF": 0,
+    "OSF": 1320,
+    "ISF": 276597,
+    "MSR": 0,
+    "OSR": 152467,
+    "ISR": 16594021,
+    "SF": 85767,
+    "SR": 4709718,
+    "MU": 0,
+    "OU": 0,
+    "IU": 0,
+    "U": 0
+}

@@ -1,0 +1,82 @@
+[2018-02-15 12:12:51.916] [jointLog] [info] parsing read library format
+[2018-02-15 12:12:51.916] [jointLog] [info] There is 1 library.
+[2018-02-15 12:12:51.998] [jointLog] [info] Loading Quasi index
+[2018-02-15 12:12:51.998] [jointLog] [info] Loading 32-bit quasi index
+[2018-02-15 12:12:56.905] [jointLog] [info] done
+[2018-02-15 12:12:56.905] [jointLog] [info] Index contained 36776 targets
+[2018-02-15 12:15:14.678] [fileLog] [info] 
+At end of round 0
+==================
+Observed 25605361 total fragments (25605361 in most recent round)
+
+[2018-02-15 12:15:14.677] [jointLog] [info] Computed 35206 rich equivalence classes for further processing
+[2018-02-15 12:15:14.677] [jointLog] [info] Counted 18191042 total reads in the equivalence classes 
+[2018-02-15 12:15:14.691] [jointLog] [info] Mapping rate = 71.0439%
+
+[2018-02-15 12:15:14.691] [jointLog] [info] finished quantifyLibrary()
+[2018-02-15 12:15:14.694] [jointLog] [info] Starting optimizer
+[2018-02-15 12:15:14.727] [jointLog] [info] Marked 0 weighted equivalence classes as degenerate
+[2018-02-15 12:15:14.728] [jointLog] [info] iteration = 0 | max rel diff. = 324.26
+[2018-02-15 12:15:14.871] [jointLog] [info] iteration = 100 | max rel diff. = 0.10359
+[2018-02-15 12:15:14.986] [jointLog] [info] iteration = 200 | max rel diff. = 0.0481286
+[2018-02-15 12:15:15.083] [jointLog] [info] iteration = 300 | max rel diff. = 0.038085
+[2018-02-15 12:15:15.192] [jointLog] [info] iteration = 400 | max rel diff. = 0.0208738
+[2018-02-15 12:15:15.289] [jointLog] [info] iteration = 500 | max rel diff. = 0.0171542
+[2018-02-15 12:15:15.389] [jointLog] [info] iteration = 600 | max rel diff. = 0.0137287
+[2018-02-15 12:15:15.519] [jointLog] [info] iteration = 700 | max rel diff. = 0.0137299
+[2018-02-15 12:15:15.638] [jointLog] [info] iteration = 800 | max rel diff. = 0.0103447
+[2018-02-15 12:15:15.734] [jointLog] [info] iteration = 894 | max rel diff. = 0.00951
+[2018-02-15 12:15:15.738] [jointLog] [info] Finished optimizer
+[2018-02-15 12:15:15.738] [jointLog] [info] writing output 
+
+[2018-02-15 12:15:15.892] [jointLog] [warning] NOTE: Read Lib [( /ngsprojects/seminavis/data_archive/cDNA/conditioningGust/2479_2/2c0b_R1.fastq.gz, /ngsprojects/seminavis/data_archive/cDNA/conditioningGust/2479_2/2c0b_R2.fastq.gz )] :
+
+Greater than 5% of the fragments disagreed with the provided library type; check the file: /scratch/seminavis/largeScaleGeneExpression/conditioningGust/mappedReadsSalmon/2c0b/lib_format_counts.json for details
+
+[2018-02-15 22:22:27.662] [jointLog] [info] parsing read library format
+[2018-02-15 22:22:27.662] [jointLog] [info] There is 1 library.
+[2018-02-15 22:22:27.751] [jointLog] [info] Loading Quasi index
+[2018-02-15 22:22:27.751] [jointLog] [info] Loading 32-bit quasi index
+[2018-02-15 22:22:32.636] [jointLog] [info] done
+[2018-02-15 22:22:32.636] [jointLog] [info] Index contained 36776 targets
+[2018-02-15 22:25:02.934] [jointLog] [info] Computed 35206 rich equivalence classes for further processing
+[2018-02-15 22:25:02.934] [jointLog] [info] Counted 18191042 total reads in the equivalence classes 
+[2018-02-15 22:25:02.944] [jointLog] [info] Mapping rate = 71.0439%
+
+[2018-02-15 22:25:02.944] [jointLog] [info] finished quantifyLibrary()
+[2018-02-15 22:25:02.947] [jointLog] [info] Starting optimizer
+[2018-02-15 22:25:02.991] [jointLog] [info] Marked 0 weighted equivalence classes as degenerate
+[2018-02-15 22:25:02.993] [jointLog] [info] iteration = 0 | max rel diff. = 324.26
+[2018-02-15 22:25:03.033] [jointLog] [info] iteration 11, adjusting effective lengths to account for biases
+[2018-02-15 22:25:02.934] [fileLog] [info] 
+At end of round 0
+==================
+Observed 25605361 total fragments (25605361 in most recent round)
+
+[2018-02-15 22:26:34.307] [jointLog] [info] Computed expected counts (for bias correction)
+[2018-02-15 22:26:34.307] [jointLog] [info] processed bias for 0.0% of the transcripts
+[2018-02-15 22:26:40.986] [jointLog] [info] processed bias for 10.0% of the transcripts
+[2018-02-15 22:26:47.772] [jointLog] [info] processed bias for 20.0% of the transcripts
+[2018-02-15 22:26:54.295] [jointLog] [info] processed bias for 30.0% of the transcripts
+[2018-02-15 22:27:01.185] [jointLog] [info] processed bias for 40.0% of the transcripts
+[2018-02-15 22:27:08.098] [jointLog] [info] processed bias for 50.0% of the transcripts
+[2018-02-15 22:27:14.580] [jointLog] [info] processed bias for 60.0% of the transcripts
+[2018-02-15 22:27:21.311] [jointLog] [info] processed bias for 70.0% of the transcripts
+[2018-02-15 22:27:28.205] [jointLog] [info] processed bias for 80.0% of the transcripts
+[2018-02-15 22:27:33.639] [jointLog] [info] processed bias for 100.0% of the transcripts
+[2018-02-15 22:27:33.803] [jointLog] [info] iteration = 100 | max rel diff. = 0.10721
+[2018-02-15 22:27:33.927] [jointLog] [info] iteration = 200 | max rel diff. = 0.0862184
+[2018-02-15 22:27:34.083] [jointLog] [info] iteration = 300 | max rel diff. = 0.0520464
+[2018-02-15 22:27:34.253] [jointLog] [info] iteration = 400 | max rel diff. = 0.0262292
+[2018-02-15 22:27:34.385] [jointLog] [info] iteration = 500 | max rel diff. = 0.0173542
+[2018-02-15 22:27:34.520] [jointLog] [info] iteration = 600 | max rel diff. = 0.0158583
+[2018-02-15 22:27:34.607] [jointLog] [info] iteration = 700 | max rel diff. = 0.0206265
+[2018-02-15 22:27:34.689] [jointLog] [info] iteration = 800 | max rel diff. = 0.010527
+[2018-02-15 22:27:34.756] [jointLog] [info] iteration = 880 | max rel diff. = 0.00995079
+[2018-02-15 22:27:34.759] [jointLog] [info] Finished optimizer
+[2018-02-15 22:27:34.759] [jointLog] [info] writing output 
+
+[2018-02-15 22:27:34.859] [jointLog] [warning] NOTE: Read Lib [( /ngsprojects/seminavis/data_archive/cDNA/conditioningGust/2479_2/2c0b_R1.fastq.gz, /ngsprojects/seminavis/data_archive/cDNA/conditioningGust/2479_2/2c0b_R2.fastq.gz )] :
+
+Greater than 5% of the fragments disagreed with the provided library type; check the file: /scratch/seminavis/largeScaleGeneExpression/conditioningGust/mappedReadsSalmon/2c0b/lib_format_counts.json for details
+

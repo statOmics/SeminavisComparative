@@ -1,0 +1,178 @@
+[2018-02-09 11:19:24.471] [jointLog] [info] parsing read library format
+[2018-02-09 11:19:24.471] [jointLog] [info] There is 1 library.
+[2018-02-09 11:21:37.603] [jointLog] [info] parsing read library format
+[2018-02-09 11:21:37.603] [jointLog] [info] There is 1 library.
+[2018-02-09 11:26:08.240] [jointLog] [info] parsing read library format
+[2018-02-09 11:26:08.240] [jointLog] [info] There is 1 library.
+[2018-02-09 11:30:46.906] [jointLog] [info] parsing read library format
+[2018-02-09 11:30:46.906] [jointLog] [info] There is 1 library.
+[2018-02-09 11:35:32.577] [jointLog] [info] parsing read library format
+[2018-02-09 11:35:32.578] [jointLog] [info] There is 1 library.
+[2018-02-09 11:38:21.471] [jointLog] [info] parsing read library format
+[2018-02-09 11:38:21.471] [jointLog] [info] There is 1 library.
+[2018-02-09 11:38:49.380] [jointLog] [info] parsing read library format
+[2018-02-09 11:38:49.380] [jointLog] [info] There is 1 library.
+[2018-02-09 11:56:16.064] [jointLog] [info] parsing read library format
+[2018-02-09 11:56:16.064] [jointLog] [info] There is 1 library.
+[2018-02-14 15:29:25.314] [jointLog] [info] parsing read library format
+[2018-02-14 15:29:25.314] [jointLog] [info] There is 1 library.
+[2018-02-14 15:33:59.828] [jointLog] [info] parsing read library format
+[2018-02-14 15:33:59.829] [jointLog] [info] There is 1 library.
+[2018-02-14 15:34:00.089] [jointLog] [info] Loading Quasi index
+[2018-02-14 15:34:00.089] [jointLog] [info] Loading 32-bit quasi index
+[2018-02-14 15:34:06.933] [jointLog] [info] done
+[2018-02-14 15:34:06.933] [jointLog] [info] Index contained 36776 targets
+[2018-02-14 15:36:41.665] [fileLog] [info] 
+At end of round 0
+==================
+Observed 23296286 total fragments (23296286 in most recent round)
+
+[2018-02-14 15:36:41.662] [jointLog] [info] Computed 33013 rich equivalence classes for further processing
+[2018-02-14 15:36:41.662] [jointLog] [info] Counted 17701674 total reads in the equivalence classes 
+[2018-02-14 15:36:41.752] [jointLog] [info] Mapping rate = 75.985%
+
+[2018-02-14 15:36:41.752] [jointLog] [info] finished quantifyLibrary()
+[2018-02-14 15:36:41.757] [jointLog] [info] Starting optimizer
+[2018-02-14 15:36:41.811] [jointLog] [info] Marked 0 weighted equivalence classes as degenerate
+[2018-02-14 15:36:41.820] [jointLog] [info] iteration = 0 | max rel diff. = 315.199
+[2018-02-14 15:36:42.278] [jointLog] [info] iteration = 100 | max rel diff. = 0.107409
+[2018-02-14 15:36:42.742] [jointLog] [info] iteration = 200 | max rel diff. = 0.0425067
+[2018-02-14 15:36:43.128] [jointLog] [info] iteration = 300 | max rel diff. = 0.0315014
+[2018-02-14 15:36:43.647] [jointLog] [info] iteration = 400 | max rel diff. = 0.0211219
+[2018-02-14 15:36:44.139] [jointLog] [info] iteration = 500 | max rel diff. = 0.0157221
+[2018-02-14 15:36:44.524] [jointLog] [info] iteration = 600 | max rel diff. = 0.0151246
+[2018-02-14 15:36:45.117] [jointLog] [info] iteration = 700 | max rel diff. = 0.0108303
+[2018-02-14 15:36:45.150] [jointLog] [info] iteration = 712 | max rel diff. = 0.00893013
+[2018-02-14 15:36:45.159] [jointLog] [info] Finished optimizer
+[2018-02-14 15:36:45.161] [jointLog] [info] writing output 
+
+[2018-02-14 15:36:45.340] [jointLog] [warning] NOTE: Read Lib [( /ngsprojects/seminavis/data_archive/cDNA/conditioningGust/2479_1/2c15b_R1.fastq.gz, /ngsprojects/seminavis/data_archive/cDNA/conditioningGust/2479_1/2c15b_R2.fastq.gz )] :
+
+Greater than 5% of the fragments disagreed with the provided library type; check the file: /scratch/seminavis/largeScaleGeneExpression/conditioningGust/mappedReadsSalmon/2c15b/lib_format_counts.json for details
+
+[2018-02-15 11:06:46.938] [jointLog] [info] parsing read library format
+[2018-02-15 11:06:46.938] [jointLog] [info] There is 1 library.
+[2018-02-15 11:06:46.979] [jointLog] [info] Loading Quasi index
+[2018-02-15 11:06:46.979] [jointLog] [info] Loading 32-bit quasi index
+[2018-02-15 11:06:49.783] [jointLog] [info] done
+[2018-02-15 11:06:49.783] [jointLog] [info] Index contained 36776 targets
+[2018-02-15 11:08:31.139] [fileLog] [info] 
+At end of round 0
+==================
+Observed 23296286 total fragments (23296286 in most recent round)
+
+[2018-02-15 11:08:31.137] [jointLog] [info] Computed 33013 rich equivalence classes for further processing
+[2018-02-15 11:08:31.137] [jointLog] [info] Counted 17701674 total reads in the equivalence classes 
+[2018-02-15 11:08:31.146] [jointLog] [info] Mapping rate = 75.985%
+
+[2018-02-15 11:08:31.146] [jointLog] [info] finished quantifyLibrary()
+[2018-02-15 11:08:31.152] [jointLog] [info] Starting optimizer
+[2018-02-15 11:08:31.182] [jointLog] [info] Marked 0 weighted equivalence classes as degenerate
+[2018-02-15 11:08:31.184] [jointLog] [info] iteration = 0 | max rel diff. = 315.199
+[2018-02-15 11:08:31.318] [jointLog] [info] iteration = 100 | max rel diff. = 0.107407
+[2018-02-15 11:08:31.433] [jointLog] [info] iteration = 200 | max rel diff. = 0.0425067
+[2018-02-15 11:08:31.552] [jointLog] [info] iteration = 300 | max rel diff. = 0.0315022
+[2018-02-15 11:08:31.666] [jointLog] [info] iteration = 400 | max rel diff. = 0.0211219
+[2018-02-15 11:08:31.787] [jointLog] [info] iteration = 500 | max rel diff. = 0.0157225
+[2018-02-15 11:08:31.894] [jointLog] [info] iteration = 600 | max rel diff. = 0.0151245
+[2018-02-15 11:08:32.029] [jointLog] [info] iteration = 700 | max rel diff. = 0.0108305
+[2018-02-15 11:08:32.040] [jointLog] [info] iteration = 712 | max rel diff. = 0.00892773
+[2018-02-15 11:08:32.044] [jointLog] [info] Finished optimizer
+[2018-02-15 11:08:32.044] [jointLog] [info] writing output 
+
+[2018-02-15 11:08:32.177] [jointLog] [warning] NOTE: Read Lib [( /ngsprojects/seminavis/data_archive/cDNA/conditioningGust/2479_1/2c15b_R1.fastq.gz, /ngsprojects/seminavis/data_archive/cDNA/conditioningGust/2479_1/2c15b_R2.fastq.gz )] :
+
+Greater than 5% of the fragments disagreed with the provided library type; check the file: /scratch/seminavis/largeScaleGeneExpression/conditioningGust/mappedReadsSalmon/2c15b/lib_format_counts.json for details
+
+[2018-02-15 22:05:48.176] [jointLog] [info] parsing read library format
+[2018-02-15 22:05:48.176] [jointLog] [info] There is 1 library.
+[2018-02-15 22:05:48.244] [jointLog] [info] Loading Quasi index
+[2018-02-15 22:05:48.244] [jointLog] [info] Loading 32-bit quasi index
+[2018-02-15 22:05:51.112] [jointLog] [info] done
+[2018-02-15 22:05:51.112] [jointLog] [info] Index contained 36776 targets
+[2018-02-15 22:07:41.349] [fileLog] [info] 
+At end of round 0
+==================
+Observed 23296286 total fragments (23296286 in most recent round)
+
+[2018-02-15 22:07:41.347] [jointLog] [info] Computed 33013 rich equivalence classes for further processing
+[2018-02-15 22:07:41.348] [jointLog] [info] Counted 17701674 total reads in the equivalence classes 
+[2018-02-15 22:07:41.355] [jointLog] [info] Mapping rate = 75.985%
+
+[2018-02-15 22:07:41.355] [jointLog] [info] finished quantifyLibrary()
+[2018-02-15 22:07:41.357] [jointLog] [info] Starting optimizer
+[2018-02-15 22:07:41.384] [jointLog] [info] Marked 0 weighted equivalence classes as degenerate
+[2018-02-15 22:07:41.385] [jointLog] [info] iteration = 0 | max rel diff. = 315.197
+[2018-02-15 22:07:41.400] [jointLog] [info] iteration 11, adjusting effective lengths to account for biases
+[2018-02-15 22:08:26.266] [jointLog] [info] Computed expected counts (for bias correction)
+[2018-02-15 22:08:26.266] [jointLog] [info] processed bias for 0.0% of the transcripts
+[2018-02-15 22:08:30.003] [jointLog] [info] processed bias for 10.0% of the transcripts
+[2018-02-15 22:08:33.786] [jointLog] [info] processed bias for 20.0% of the transcripts
+[2018-02-15 22:08:37.483] [jointLog] [info] processed bias for 30.0% of the transcripts
+[2018-02-15 22:08:41.272] [jointLog] [info] processed bias for 40.0% of the transcripts
+[2018-02-15 22:08:45.015] [jointLog] [info] processed bias for 50.0% of the transcripts
+[2018-02-15 22:08:48.789] [jointLog] [info] processed bias for 60.0% of the transcripts
+[2018-02-15 22:08:52.565] [jointLog] [info] processed bias for 70.0% of the transcripts
+[2018-02-15 22:08:56.354] [jointLog] [info] processed bias for 80.0% of the transcripts
+[2018-02-15 22:08:58.006] [jointLog] [info] processed bias for 100.0% of the transcripts
+[2018-02-15 22:08:58.083] [jointLog] [info] iteration = 100 | max rel diff. = 0.158298
+[2018-02-15 22:08:58.159] [jointLog] [info] iteration = 200 | max rel diff. = 0.0903924
+[2018-02-15 22:08:58.235] [jointLog] [info] iteration = 300 | max rel diff. = 0.0651764
+[2018-02-15 22:08:58.313] [jointLog] [info] iteration = 400 | max rel diff. = 0.0426744
+[2018-02-15 22:08:58.390] [jointLog] [info] iteration = 500 | max rel diff. = 0.0151964
+[2018-02-15 22:08:58.467] [jointLog] [info] iteration = 600 | max rel diff. = 0.0151921
+[2018-02-15 22:08:58.544] [jointLog] [info] iteration = 700 | max rel diff. = 0.0130174
+[2018-02-15 22:08:58.609] [jointLog] [info] iteration = 786 | max rel diff. = 0.00871409
+[2018-02-15 22:08:58.611] [jointLog] [info] Finished optimizer
+[2018-02-15 22:08:58.611] [jointLog] [info] writing output 
+
+[2018-02-15 22:08:58.708] [jointLog] [warning] NOTE: Read Lib [( /ngsprojects/seminavis/data_archive/cDNA/conditioningGust/2479_1/2c15b_R1.fastq.gz, /ngsprojects/seminavis/data_archive/cDNA/conditioningGust/2479_1/2c15b_R2.fastq.gz )] :
+
+Greater than 5% of the fragments disagreed with the provided library type; check the file: /scratch/seminavis/largeScaleGeneExpression/conditioningGust/mappedReadsSalmon/2c15b/lib_format_counts.json for details
+
+[2018-02-15 22:14:01.279] [jointLog] [info] parsing read library format
+[2018-02-15 22:14:01.279] [jointLog] [info] There is 1 library.
+[2018-02-15 22:14:01.321] [jointLog] [info] Loading Quasi index
+[2018-02-15 22:14:01.321] [jointLog] [info] Loading 32-bit quasi index
+[2018-02-15 22:14:05.050] [jointLog] [info] done
+[2018-02-15 22:14:05.050] [jointLog] [info] Index contained 36776 targets
+[2018-02-15 22:15:48.428] [jointLog] [info] Computed 33013 rich equivalence classes for further processing
+[2018-02-15 22:15:48.428] [jointLog] [info] Counted 17701674 total reads in the equivalence classes 
+[2018-02-15 22:15:48.449] [jointLog] [info] Mapping rate = 75.985%
+
+[2018-02-15 22:15:48.449] [jointLog] [info] finished quantifyLibrary()
+[2018-02-15 22:15:48.454] [jointLog] [info] Starting optimizer
+[2018-02-15 22:15:48.492] [jointLog] [info] Marked 0 weighted equivalence classes as degenerate
+[2018-02-15 22:15:48.495] [jointLog] [info] iteration = 0 | max rel diff. = 315.2
+[2018-02-15 22:15:48.509] [jointLog] [info] iteration 11, adjusting effective lengths to account for biases
+[2018-02-15 22:15:48.429] [fileLog] [info] 
+At end of round 0
+==================
+Observed 23296286 total fragments (23296286 in most recent round)
+
+[2018-02-15 22:16:39.502] [jointLog] [info] Computed expected counts (for bias correction)
+[2018-02-15 22:16:39.503] [jointLog] [info] processed bias for 0.0% of the transcripts
+[2018-02-15 22:16:43.625] [jointLog] [info] processed bias for 10.0% of the transcripts
+[2018-02-15 22:16:47.795] [jointLog] [info] processed bias for 20.0% of the transcripts
+[2018-02-15 22:16:51.870] [jointLog] [info] processed bias for 30.0% of the transcripts
+[2018-02-15 22:16:56.027] [jointLog] [info] processed bias for 40.0% of the transcripts
+[2018-02-15 22:17:00.105] [jointLog] [info] processed bias for 50.0% of the transcripts
+[2018-02-15 22:17:04.333] [jointLog] [info] processed bias for 60.0% of the transcripts
+[2018-02-15 22:17:08.631] [jointLog] [info] processed bias for 70.0% of the transcripts
+[2018-02-15 22:17:12.898] [jointLog] [info] processed bias for 80.0% of the transcripts
+[2018-02-15 22:17:14.593] [jointLog] [info] processed bias for 100.0% of the transcripts
+[2018-02-15 22:17:14.701] [jointLog] [info] iteration = 100 | max rel diff. = 0.158358
+[2018-02-15 22:17:14.810] [jointLog] [info] iteration = 200 | max rel diff. = 0.0904435
+[2018-02-15 22:17:14.917] [jointLog] [info] iteration = 300 | max rel diff. = 0.0652114
+[2018-02-15 22:17:15.023] [jointLog] [info] iteration = 400 | max rel diff. = 0.0426782
+[2018-02-15 22:17:15.128] [jointLog] [info] iteration = 500 | max rel diff. = 0.0151932
+[2018-02-15 22:17:15.225] [jointLog] [info] iteration = 600 | max rel diff. = 0.0151889
+[2018-02-15 22:17:15.331] [jointLog] [info] iteration = 700 | max rel diff. = 0.0130134
+[2018-02-15 22:17:15.421] [jointLog] [info] iteration = 785 | max rel diff. = 0.00871396
+[2018-02-15 22:17:15.423] [jointLog] [info] Finished optimizer
+[2018-02-15 22:17:15.423] [jointLog] [info] writing output 
+
+[2018-02-15 22:17:15.531] [jointLog] [warning] NOTE: Read Lib [( /ngsprojects/seminavis/data_archive/cDNA/conditioningGust/2479_1/2c15b_R1.fastq.gz, /ngsprojects/seminavis/data_archive/cDNA/conditioningGust/2479_1/2c15b_R2.fastq.gz )] :
+
+Greater than 5% of the fragments disagreed with the provided library type; check the file: /scratch/seminavis/largeScaleGeneExpression/conditioningGust/mappedReadsSalmon/2c15b/lib_format_counts.json for details
+

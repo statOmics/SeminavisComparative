@@ -1,0 +1,10 @@
+{
+    "salmon_version": "0.9.1",
+    "gcBias": [],
+    "index": "/scratch/seminavis/largeScaleGeneExpression/newGenome_20180209/indexHlp/",
+    "libType": "ISR",
+    "mates1": "/ngsprojects/seminavis/data_archive/cDNA/conditioningGust/2479_2/3c1b_R1.fastq.gz",
+    "mates2": "/ngsprojects/seminavis/data_archive/cDNA/conditioningGust/2479_2/3c1b_R2.fastq.gz",
+    "output": "/scratch/seminavis/largeScaleGeneExpression/conditioningGust/mappedReadsSalmon/3c1b",
+    "auxDir": "aux_info"
+}

@@ -1,0 +1,21 @@
+{
+    "read_files": "( /ngsprojects/seminavis/data_archive/cDNA/conditioningGust/2479_2/2c1a_R1.fastq.gz, /ngsprojects/seminavis/data_archive/cDNA/conditioningGust/2479_2/2c1a_R2.fastq.gz )",
+    "expected_format": "ISR",
+    "compatible_fragment_ratio": 0.8267125339339557,
+    "num_compatible_fragments": 18093953,
+    "num_assigned_fragments": 21886632,
+    "num_consistent_mappings": 19107685,
+    "num_inconsistent_mappings": 4082553,
+    "MSF": 0,
+    "OSF": 633,
+    "ISF": 134256,
+    "MSR": 0,
+    "OSR": 15801,
+    "ISR": 19107685,
+    "SF": 49195,
+    "SR": 3882001,
+    "MU": 0,
+    "OU": 0,
+    "IU": 0,
+    "U": 0
+}
