@@ -1,0 +1,149 @@
+---
+title: "Untitled"
+author: "Gust Bilcke"
+date: "22 januari 2019"
+output: html_document
+---
+
+# Loading all data
+
+```{r}
+library(xlsx); library(ggplot2); library(stringr); library(cowplot)
+
+cpm_plus <- read.delim("Significance_matrices_for_plotting/CPM_PLUS_no_filtering.txt", stringsAsFactors =  F, sep = "", check.names = F)
+cpm_min <- read.delim("Significance_matrices_for_plotting/CPM_MIN_no_filtering.txt", stringsAsFactors = F, sep = "", check.names = F)
+cpm_minE <- read.delim("Significance_matrices_for_plotting/CPM_EMILIO_no_filtering.txt", stringsAsFactors = F, sep = "", check.names = F)
+cpm <- cbind(cpm_plus, cpm_min, cpm_minE)
+
+meta <- read.xlsx("conditions/meta.xlsx", sheetIndex = 1)
+
+genes <- read.xlsx("SIP responsive - Selected for plotting.xlsx", "selected_SR")
+```
+
+# Plotting
+```{r}
+
+cpm <- cpm[meta$Time != 0]
+meta <- meta[meta$Time != 0,]
+
+allcpm <- as.numeric(unlist(lapply(genes$gene_ID, function(x) cpm[rownames(cpm) == x,])))
+allgenes <- as.character(unlist(lapply(genes$gene_ID, function(x) rep(x, 54))))
+alltype <- as.character(unlist(lapply(genes$gene_ID, function(x) rep(genes$type[genes$gene_ID == x], 54))))
+allresponse <- as.character(unlist(lapply(genes$gene_ID, function(x) rep(genes$source[genes$gene_ID == x], 54))))
+allMT <- rep(meta$MT, nrow(genes))
+alltime <- rep(meta$Time, nrow(genes))
+alltreatment <- rep(meta$treatment, nrow(genes))
+
+df <- data.frame(CPM = allcpm, gene_ID = allgenes, type = alltype, response = allresponse, MT = allMT, time = alltime, treatment = alltreatment)
+
+# df2 <- aggregate(df[1:2], by = list(df$gene_ID, df$MT, df$type, df$process, df$time, df$treatment), mean)
+# colnames(df2) <- c("gene_ID", "MT", "type", "process", "time", "treatment", "CPMus", "CPM")
+# 
+# df2$MTreat <- paste0(df2$treatment, " " , df2$MT)
+# df2$MTreat <- factor(df2$MTreat, levels = c("Control MT+", "SIP MT+", "Control MT-", "SIP MT-"))
+# df2$labels <- paste0(df2$gene_ID, " ", df2$type)
+# df2$process <- factor(df2$process, levels = unique(genes$Process))
+# df2$labels <- factor(df2$labels , levels = unique(df2$labels ))
+
+df$MT <- factor(df$MT, levels = c("MT+", "MT-"))
+df$gene_ID <- as.character(df$gene_ID)
+genes$gene_ID <- as.character(genes$gene_ID)
+
+for (i in 1:nrow(genes)){
+  gene <- genes$gene_ID[i]
+  df_gene <- df[df$gene_ID == gene,]
+  
+  plot <- ggplot(data = df_gene) +
+  geom_point(aes(y = CPM, x = time, color = treatment), size = 0.6) +
+  geom_smooth(aes(y = CPM, x = time, color = treatment), se = F, span = 0.4, size = 1.3) +
+  facet_grid( ~ MT, scales = "free", space = "free_x", switch = "y") +
+  ggtitle(df_gene$type, subtitle = paste0(df_gene$gene_ID, " ", df_gene$response)) +
+#  facet_wrap(gene_ID_all ~ mating_type_all, scales = "free", ncol = 4 ) +
+  scale_color_manual(values = c("black", "orange")) +
+  theme_bw() +
+  xlab("time (h)") +
+  ylab("counts per million (cpm)") +
+  labs(color = "Treatment") +
+  scale_x_continuous(breaks = c(0.25,1,3,6,9, 10)) +
+  theme(plot.title = element_text(size=11), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.x = element_text(angle = 45, vjust = 0.7, hjust = 0.7, size = 6), legend.position = "bottom", strip.text.y = element_text(angle = 180), axis.title.x = element_blank(), axis.title.y = element_blank(), legend.text = element_text(size = 14), legend.title = element_text(size = 16))
+  assign(paste0("plot", as.character(i)), plot)
+}
+
+
+library(cowplot)
+
+y <- ggplot() +
+  ylab("Counts per million (CPM)")
+x <- ggplot() +
+  xlab("time (h)")
+
+leg <- get_legend(plot1)
+plot1b <- plot1 + theme(legend.position = "none")
+plot2b <- plot2 + theme(legend.position = "none")
+plot3b <- plot3 + theme(legend.position = "none")
+plot4b <- plot4 + theme(legend.position = "none")
+plot5b <- plot5 + theme(legend.position = "none")
+plot6b <- plot6 + theme(legend.position = "none")
+plot7b <- plot7 + theme(legend.position = "none")
+plot8b <- plot8 + theme(legend.position = "none")
+plot9b <- plot9 + theme(legend.position = "none")
+plot10b <- plot10 + theme(legend.position = "none")
+plot11b <- plot11 + theme(legend.position = "none")
+plot12b <- plot12 + theme(legend.position = "none")
+
+# 
+# plot1b <-  plot1b + theme(plot.margin = margin(l = 0, t = 5.5, r = 5.5, b = 5.5))
+# plot2b <-  plot2b + theme(plot.margin = margin(l = 0, t = 5.5, r = 5.5, b = 5.5))
+# plot3b <-  plot3b + theme(plot.margin = margin(l = 0, t = 5.5, r = 5.5, b = 5.5))
+# plot4b <-  plot4b + theme(plot.margin = margin(l = 0, t = 5.5, r = 5.5, b = 5.5))
+
+y <- y + theme(plot.margin = margin(l = 10, t = 0, r = 0, b = 0))
+
+# plot9b <-  plot9b + theme(plot.margin = margin(l = 5.5, t = 5.5, r = 0, b = 5.5))
+# plot10b <-  plot10b + theme(plot.margin = margin(l = 5.5, t = 5.5, r = 0, b = 5.5))
+# plot11b <-  plot11b + theme(plot.margin = margin(l = 5.5, t = 5.5, r = 0, b = 5.5))
+# plot12b <-  plot12b + theme(plot.margin = margin(l = 5.5, t = 5.5, r = 0, b = 5.5))
+# 
+# plot13b <-  plot13b + theme(plot.margin = margin(l = 0, t = 5.5, r = 5.5, b = 5.5))
+# plot14b <-  plot14b + theme(plot.margin = margin(l = 0, t = 5.5, r = 5.5, b = 5.5))
+# plot15b <-  plot15b + theme(plot.margin = margin(l = 0, t = 5.5, r = 5.5, b = 5.5))
+# plot16b <-  plot16b + theme(plot.margin = margin(l = 0, t = 5.5, r = 5.5, b = 5.5))
+
+both <-  plot_grid(plot1b, plot2b,plot3b, plot4b , align = "v",
+                             ncol = 1,
+                      scale = 1)
+
+titleboth <- ggplot()+ggtitle("SRBs") + theme(title = element_text(size = 17))
+
+both2 <- plot_grid(titleboth, both, nrow = 2, rel_heights = c(0.04,0.9))
+both2
+
+plus <- plot_grid( plot5b,plot6b, plot7b, plot8b , align = "v",
+                             ncol = 1,
+                       scale = 1)
+titleplus <- ggplot()+ggtitle("SRPs") + theme(title = element_text(colour = "#B83C3C", size = 17))
+
+plus2 <- plot_grid(titleplus, plus, nrow = 2, rel_heights = c(0.04,0.9))
+
+
+
+min <- plot_grid(plot9b,plot10b,plot11b ,plot12b, align = "v",
+                             ncol = 1,
+                      scale = 1)
+titlemin <- ggplot()+ggtitle("SRMs") + theme(title = element_text(colour = "#024399", size = 17))
+
+min2 <- plot_grid(titlemin, min, nrow = 2, rel_heights = c(0.04,0.9))
+
+
+together <- plot_grid( min2, plus2, both2, nrow = 1, ncol = 3,  rel_widths = c(0.25,0.25,0.25)) 
+together
+
+
+togetheranderhalf <- plot_grid(y,together, nrow = 1, ncol = 2, rel_widths = c(0.03,0.9))
+together2 <- plot_grid(togetheranderhalf, x, leg, nrow = 3, ncol = 1, rel_heights = c(0.94, 0.03,0.05))
+
+ggsave("test.pdf", width = 10, height = 10)
+
+
+```
+

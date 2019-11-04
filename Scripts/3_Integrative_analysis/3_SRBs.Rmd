@@ -1,0 +1,303 @@
+---
+title: "SRB with FDR control"
+author: "Koen Van den Berge"
+date: "10/17/2019"
+output: html_document
+---
+
+This script will look for genes that are DE from the delta FC cutoff in both MT+ and MT- and are this at the heart of the SIP response
+
+# MT- (Sara Moeys)
+
+## Import & change data
+```{r include=FALSE}
+library(edgeR) ; library(stageR) ; library(tximport) ; library(readr); library(xlsx) ; library(ggplot2) ; library(tidyr)
+
+wd <- getwd()
+dir <- dirname(dirname(wd))
+
+quantFilesSara = list.files(paste0(dir,"/Mapping_output_Salmon/Mapping_Moeys/"))
+load(paste0(dir,"/Metadata/tx2gene.rda"))
+
+## try http:// if https:// URLs are not supported
+dataSara = tximport(files=paste0(dir,"/Mapping_output_Salmon/Mapping_Moeys/",quantFilesSara,"/quant.sf"), type="salmon", txOut=FALSE, tx2gene=tx2gene, importer=read_tsv)
+countsSara=dataSara$counts
+colnames(countsSara) = quantFilesSara
+## sum counts across lanes for Sara's dataset.
+countsSara = countsSara[,seq(1,41,by=2)] + countsSara[,seq(2,42,by=2)]
+
+conditions <- read.delim(paste0(dir, "/Metadata/conditions_Moeys.txt"))
+rownames(conditions) <- unlist(lapply(strsplit(as.character(conditions$files),split="_"),function(x) paste(x[1:2],collapse = "_")))
+timeSara = conditions$time[match(colnames(countsSara),rownames(conditions))]
+timeSara = as.character(timeSara)
+timeSara[timeSara=="3h"] <- 3
+timeSara[timeSara=="1h"] <- 1
+timeSara[timeSara=="15m"] <- 0.25
+timeSara <- as.numeric(timeSara)
+treatSara = conditions$treatment[match(colnames(countsSara),rownames(conditions))]
+treatSara <- (c("t","c"))[as.numeric(treatSara)] #control-treatment coding as in Gust's experiment
+
+metaData = read.xlsx(paste0(dir, "/Metadata/metadata_Moeys.xlsx"), sheetIndex=1, rowIndex=1:22, colIndex=1:9, header=TRUE)
+metaData$UNIQUE.SAMPLE.NUMBER = as.character(metaData$UNIQUE.SAMPLE.NUMBER)
+metaData$UNIQUE.SAMPLE.NUMBER = sub(x=metaData$UNIQUE.SAMPLE.NUMBER ,pattern="[a-z]+",replacement="")
+metaData$UNIQUE.SAMPLE.NUMBER = as.numeric(metaData$UNIQUE.SAMPLE.NUMBER)
+conditions$lib=as.factor(paste("L",sapply(rownames(conditions),function(x) substr(strsplit(x,"_")[[1]][1],5,7)),sep=""))
+target1 = conditions[conditions$lane==1,]
+target1$lib = sub(x=target1$lib,pattern="L",replacement="")
+allData = merge(x=metaData, y=target1, by.x="UNIQUE.SAMPLE.NUMBER", by.y="lib")
+
+conditions$lib2 =  sub(x=conditions$lib,pattern="L",replacement="")
+matchID = match(x=conditions$lib2,table=allData$UNIQUE.SAMPLE.NUMBER)
+conditions$week = allData$SAMPLE.NAME[matchID]
+conditions$week = as.character(conditions$week)
+conditions$week = factor(as.numeric(sapply(1:length(conditions$week), function(i) substr(conditions$week[i],start=nchar(conditions$week[i]),stop=nchar(conditions$week[i])))))
+weekSara <- as.character(conditions$week[match(colnames(countsSara),rownames(conditions))])
+```
+
+## filter and normalize
+
+```{r}
+keep <- rowSums(cpm(countsSara)>1)>=3
+table(keep)
+countsSara <- countsSara[keep,]
+
+d <- DGEList(countsSara)
+d <- calcNormFactors(d)
+```
+
+## model design
+
+```{r}
+treatTime <- factor(paste0("t",timeSara,"_",treatSara))
+treatTime = relevel(treatTime,ref="t0_c")
+design <- model.matrix(~treatTime+weekSara)
+
+colnames(countsSara) <- treatTime
+write.table(countsSara, "counts_Moeys_SIPplus.txt")
+write.table(treatSara, "treatment_Moeys_SIPplus.txt", row.names = F, col.names = F, quote =F)
+write.table(timeSara, "time_Moeys_SIPplus.txt",  row.names = F, col.names = F, quote =F)
+write.table(weekSara, "batch_effect_Moeys_SIPplus.txt",  row.names = F, col.names = F, quote =F)
+```
+
+## MDS plot
+
+```{r}
+t<- plotMDS(d,col=as.numeric(factor(timeSara)),pch=c(9,20)[as.numeric(factor(treatSara))])
+legend("center", c("0m","15m","1h","3h"), pch=20, col=as.numeric(factor(timeSara))[1:6])
+
+treat2 <- treatSara
+treat2[treat2 == "c"] <- "control"
+treat2[treat2 == "t"] <- "SIP+ treated"
+
+time2 <- as.factor(timeSara)
+
+
+MDS_df <- data.frame(t$x, t$y)
+
+ggplot(data = MDS_df) +
+  geom_point(aes(x = t.x, y = t.y,  fill = time2,  shape = treat2), size = 3)  +
+  theme_classic() +
+  theme(legend.box="horizontal") +
+  scale_shape_manual(values = c(21,23))+
+  scale_fill_manual(values= c("grey20",  "orange","firebrick3", "olivedrab3")) +
+  guides(fill = guide_legend(override.aes=list(shape=21)), shape = guide_legend(override.aes=list(fill = "black"))) +
+  theme(legend.position = c(0.5, 0.55)) +
+  labs(fill = "Time (h)", shape = "Treatment") +
+  xlab("Leading logFC dim1") +
+  ylab("Leading logFC dim2")
+
+##ggsave("plots/MDS_min.pdf" ,width = 6, height = 4)
+
+```
+
+## model fitting
+
+```{r}
+d <- DGEList(countsSara)
+d <- calcNormFactors(d)
+d <- estimateDisp(d,design)
+plotBCV(d)
+
+fit <- glmFit(d,design)
+
+## check if the residuals follow a negative binomial distribution (Q-Q plot)
+gofStat <- gof(fit,plot=TRUE)
+```
+
+## Stagewise testing with Sidak p-value aggregation (as glmTreat does not handle omnibus tests we use sidak p-value aggregation for omnibus testing)
+
+```{r}
+library(aggregation)
+
+L <- matrix(0,nrow=ncol(fit$coefficients),ncol=3)
+dimnames(L) <- list(colnames(fit$coefficients),c("t15","t1","t3"))
+L[c("treatTimet0.25_t","treatTimet0.25_c"),1] <- c(1,-1)
+L[c("treatTimet1_t","treatTimet1_c"),2] <- c(1,-1)
+L[c("treatTimet3_t","treatTimet3_c"),3] <- c(1,-1)
+
+tr15 <- glmTreat(fit, contrast = as.data.frame(L)$t15, lfc=log2(3))
+tr1 <- glmTreat(fit, contrast = as.data.frame(L)$t1, lfc=log2(3))
+tr3 <- glmTreat(fit, contrast = as.data.frame(L)$t3, lfc=log2(3))
+
+# Aggregate p-values
+all_p_tr <- data.frame(tr15$table$PValue, tr1$table$PValue, tr3$table$PValue)
+colnames(all_p_tr) <- c("t15", "t1", "t3")
+rownames(all_p_tr) <- rownames(tr15)
+
+pScreenMin <- apply(all_p_tr, 1, function(x) sidak(x))
+names(pScreenMin) <- rownames(tr15)
+p_confirmation_tr <- as.matrix(all_p_tr)
+
+stageRobj_tr_min <- stageR(pConfirmation = p_confirmation_tr, pScreen = pScreenMin)
+stageRobj2_tr_min <- stageWiseAdjustment(object = stageRobj_tr_min, method = "holm", alpha = 0.05)
+
+res_tr_min <- as.data.frame(getResults(stageRobj2_tr_min))
+
+colSums(res_tr_min)
+```
+
+
+# MT + 
+
+# Import
+
+```{r include=FALSE}
+library(ggplot2)
+library(tidyr)
+
+wd <- getwd()
+dir <- dirname(dirname(wd))
+
+quantFiles = list.files(paste0(dir,"/Mapping_output_Salmon/Mapping_MT+/"))
+
+load(paste0(dir,"/Metadata/tx2gene.rda"))
+data = tximport(files=paste0(dir,"/Mapping_output_Salmon/Mapping_MT+/",quantFiles,"/quant.sf"), type="salmon", txOut=FALSE, tx2gene=tx2gene, importer=read_tsv)
+countsGust=data$counts
+colnames(countsGust)=quantFiles
+colnames(countsGust)[29] <- "3c0a" #was misnamed 
+
+## remove technical replicate from run 2
+countsGust <- countsGust[,!colnames(countsGust)%in%"1c0a2"]
+ # Load data
+d <- DGEList(countsGust)
+ # filter on cpm
+keep <- rowSums(cpm(d)>1)>=3
+dont_keep <- rowSums(cpm(d)>1)< 3
+low_expression <- names(dont_keep)[dont_keep]
+d <- d[keep,]
+table(keep) # number of genes after filtering on cpm 
+ # normalization 
+d$samples$lib.size <- colSums(d$counts)
+d <- calcNormFactors(d)
+ ### Design:
+week=substr(colnames(d),1,1)
+treat=substr(colnames(d),2,2)
+time=substr(colnames(d),3,nchar(colnames(d))-1)
+treatTime=factor(paste0(treat,"_",time))
+run=factor(
+    c(1, #1c0a
+      1, #1c15a
+      1, #1c1b
+      1, #1c3b
+      1, #1c6b
+      1, #1c9b
+      1, #1t15a
+      1, #1t1a
+      1, #1t3b
+      1, #1t6b
+      1, #1t9b
+      2, #2c0b
+      2, #2c15a
+      1, #2c15b
+      2, #2c1a
+      2, #2c3b
+      2, #2c6a
+      2, #2c9b
+      2, #2t15a
+      2, #2t1a
+      2, #2t3a
+      2, #2t6b
+      2, #2t9a
+      2, #3c1b
+      1, #3c3a
+      2, #3c6c
+      1, #3c9c
+      2, #3c0a
+      1, #3t15c
+      2, #3t1c
+      1, #3t3a
+      2, #3t6b
+      1)) #3t9a
+
+design <- model.matrix(~treatTime+week+run,contrasts.arg=list(week=contr.sum, run=contr.sum))
+rownames(design) <- colnames(d)
+
+design
+```
+
+# Dispersion estimation, model fitting
+
+```{r}
+## estimate dispersion
+d <- estimateDisp(d,design)
+plotBCV(d)
+
+## fit model
+fit <- glmFit(d,design)
+fitPlus <- fit
+
+## check if the residuals follow a negative binomial distribution (Q-Q plot)
+gofStat <- gof(fit,plot=TRUE)
+```
+
+# Stage-wise hypothesis testing using stageR
+
+```{r}
+## contrast matrix
+L=matrix(0,nrow=ncol(coef(fit)),ncol=5)
+rownames(L)=colnames(coef(fit))
+colnames(L)=c("t15","t1","t3","t6","t9")#,
+	      #"avFC","lFC1","lFC2","eFC",
+	      #"lFC1-eFC","lFC2-eFC")
+L[c(7,2)+1,1] <- c(1,-1) #t15
+L[c(6,1)+1,2] <- c(1,-1) #t1
+L[c(8,3)+1,3] <- c(1,-1) #t3
+```
+
+
+# FDR controlled SRBs
+
+## MT- to MT+
+
+```{r}
+minGenes <- rownames(res_tr_min)[res_tr_min$padjScreen == 1]
+minGenes <- intersect(minGenes,rownames(fit))
+
+# Test only genes withheld in the first stage (DE in MT-)
+tr15 <- glmTreat(fitPlus[minGenes,], contrast = as.data.frame(L)$t15, lfc= log2(3))
+tr1 <- glmTreat(fitPlus[minGenes,], contrast = as.data.frame(L)$t1, lfc= log2(3))
+tr3 <- glmTreat(fitPlus[minGenes,], contrast = as.data.frame(L)$t3, lfc= log2(3))
+
+# Aggregate p-values
+allPMinToPlus <- data.frame(tr15$table$PValue, tr1$table$PValue, tr3$table$PValue)
+colnames(allPMinToPlus) <- c("t15", "t1", "t3")
+rownames(allPMinToPlus) <- rownames(tr15)
+
+pScreenMinToPlus <- apply(allPMinToPlus, 1, function(x) sidak(x))
+names(pScreenMinToPlus) <- rownames(tr15)
+pConfirmationMinToPlus <- as.matrix(allPMinToPlus)
+
+objMinToPlus <- stageR(pConfirmation = pConfirmationMinToPlus, pScreen = pScreenMinToPlus)
+objMinToPlus <- stageWiseAdjustment(object = objMinToPlus, method = "holm", alpha = 0.05)
+
+resMinToPlus <- as.data.frame(getResults(objMinToPlus))
+colSums(resMinToPlus)
+minToPlusGenes <- rownames(resMinToPlus)[resMinToPlus[,1]==1]
+
+minToPlusGenes
+```
+
+
+
+
+

@@ -182,20 +182,12 @@ res <- getResults(stageRObj)
 head(res)
 colSums(res)[2:6]
 
+AdjP <- getAdjustedPValues(stageRObj, onlySignificantGenes=F, order=F)
 
-
-AdjP <- getAdjustedPValues(stageRObj, onlySignificantGenes=F, order=TRUE)
+#write.table(AdjP, file = paste0(dir, "/DE_matrices/Adjusted_P_values_MT+.txt"), quote =  F )
 
 stagewise_numbers <- colSums(res) #nr of significant genes for every contrast on a x% OFDR level.
 
-# Gusts conventional analysis: on contrast level --> BH on every contrast (pConfirmation) separately
-conventional <- apply(pConfirmation, 2, function(x) p.adjust(x, "BH"))
-conventional_numbers <- colSums(conventional < 0.05)
-conventional_gene <- rowSums(conventional < 0.05)
-sum(conventional_gene > 0) # gene level genes for conventional analysis
-
-# Venn diagram
-gene_conv <- rownames(conventional)[conventional_gene > 0]
 ```
 
 
@@ -350,9 +342,7 @@ FCplot <- ggplot(data = FCplots, aes(x = as.numeric(timepoint), y = logFC, group
  facet_grid(~ facet) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
 
-
 FCplot
-
 
 FCplot2 <- ggplot(data = FCplots, aes(x = as.numeric(timepoint), y = logFC, group = gene_ID)) +
     geom_line(size = 0.5, alpha = 0.06) +

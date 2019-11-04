@@ -1,0 +1,107 @@
+---
+title: "Heatmap of genes of interest"
+author: "Gust Bilcke"
+date: "9 april 2018"
+output: html_document
+---
+
+```{r}
+library("scales"); library("ggplot2"); library("tidyr"); library("wesanderson"); library("xlsx")
+
+wd <- getwd()
+dir <- dirname(dirname(wd))
+genes_of_interest <- read.xlsx("Longlist_genes_selected_processes.xlsx", 1, stringsAsFactors = F)
+
+# Read "result" matrices (to see if each gene is present and significant in each experiment)
+adjP_plus <- read.delim(paste0(dir, "/DE_matrices/Adjusted_P_values_MT+.txt"), sep = "", stringsAsFactors = F)
+adjP_min <- read.delim(paste0(dir, "/DE_matrices/Adjusted_P_values_MT-_Moeys.txt"), sep = "", stringsAsFactors = F)
+adjP_minE <- read.delim(paste0(dir, "/DE_matrices/Adjusted_P_values_MT-_Cirri.txt"), sep = "", header = F, stringsAsFactors = F, row.names = 1)
+
+result_plus <- as.data.frame(ifelse(adjP_plus < 0.05, 1,0 ))
+result_min <- as.data.frame(ifelse(adjP_min < 0.05, 1,0 ))
+result_minE <- as.data.frame(ifelse(adjP_minE < 0.05, 1,0 ))
+
+result_plus[is.na(result_plus)] <- 0
+result_min[is.na(result_min)] <- 0
+result_minE[is.na(result_minE)] <- 0
+
+# Change AdjP matrices to "result" matrices --> use this for plotting only significant genes in the heatmap
+# To do: change the CPMs that get loaded
+
+# Genes present in all three
+keep <- rownames(result_plus)[rownames(result_plus) %in% rownames(result_min) & rownames(result_plus) %in% rownames(result_minE)]
+goi <- genes_of_interest
+goi <- genes_of_interest[genes_of_interest$Gene %in% keep,]
+
+goi$result_plus <- unlist(lapply(goi$Gene, function(x) sum(result_plus[x,])))
+goi$result_min <- unlist(lapply(goi$Gene, function(x) sum(result_min[x,])))
+goi$results_minE <- unlist(lapply(goi$Gene, function(x) sum(result_minE[x,])))
+goi
+
+goi2 <- goi[goi$result_plus > 0 & (goi$result_min > 0 | goi$results_minE > 0),]
+goi <- rbind(goi2, goi[nrow(goi),]) # Force add sig10a which for some reason dissapeared
+
+# Read "count" matrices
+cpm_plus <- read.delim(paste0(dir, "/DE_matrices/Counts_per_million_MT+.txt"), sep = "", stringsAsFactors = F)
+cpm_min <- read.delim(paste0(dir, "/DE_matrices/Counts_per_million_MT-_Moeys.txt"), sep = "", stringsAsFactors = F)
+cpm_minE <- read.delim(paste0(dir, "/DE_matrices/Counts_per_million_MT-_Cirri.txt"), sep = "", stringsAsFactors = F)
+
+# Get metadata for the count matrices
+
+# Merge all gene expression
+cpm_plus <- cpm_plus[rownames(cpm_plus) %in% keep,]
+cpm_min <- cpm_min[rownames(cpm_min) %in% keep,]
+cpm_minE <- cpm_minE[rownames(cpm_minE) %in% keep,]
+
+cpm <- cbind(cpm_plus, cpm_min, cpm_minE)
+
+meta <- read.xlsx(file = paste0(dir, "/Metadata/metadata_all_heatmap.xlsx"), sheetIndex = 1)
+meta$MT <- as.character(meta$MT)
+cpm <- cpm[meta$Time != 0]
+meta <- meta[meta$Time != 0,]
+
+
+# Go over every gene of interest, select the CPMs, select the metadata
+# Scale on the gene*MT level
+allcpmUS <- as.numeric(unlist(lapply(goi$Gene, function(x) as.numeric(cpm[x,]))))
+allcpm <- as.numeric(unlist(lapply(goi$Gene, function(x) c(scale(as.numeric(cpm[x,1:30])),scale(as.numeric(cpm[x,31:54]))))))
+allgenes <- as.character(unlist(lapply(goi$Gene, function(x) rep(x, 54))))
+alltype <- as.character(unlist(lapply(goi$Gene, function(x) rep(goi$Type[goi$Gene == x], 54))))
+allprocess <- as.character(unlist(lapply(goi$Gene, function(x) rep(goi$Process[goi$Gene == x], 54))))
+allMT <- rep(meta$MT, nrow(goi))
+alltime <- rep(meta$Time, nrow(goi))
+alltreatment <- rep(meta$treatment, nrow(goi))
+
+df <- data.frame(CPMus = allcpmUS, CPM = allcpm, gene_ID = allgenes, type = alltype, process = allprocess, MT = allMT, time = alltime, treatment = alltreatment)
+
+df2 <- aggregate(df[1:2], by = list(df$gene_ID, df$MT, df$type, df$process, df$time, df$treatment), mean)
+colnames(df2) <- c("gene_ID", "MT", "type", "process", "time", "treatment", "CPMus", "CPM")
+
+df2$gene_ID <- factor(df2$gene_ID, levels = unique(goi$Gene))
+
+df2 <- df2[order(df2$gene_ID),]
+
+df2$MTreat <- paste0(df2$treatment, " " , df2$MT)
+df2$MTreat <- factor(df2$MTreat, levels = c("Control MT+", "SIP MT+", "Control MT-", "SIP MT-"))
+
+df2$labels <- paste(df2$gene_ID,  df2$type, sep = " ")
+df2$process <- factor(df2$process, levels = unique(goi$Process))
+df2$labels <- factor(df2$labels , levels = unique(df2$labels ))
+
+pal <- wes_palette("Zissou1", 100, type = "continuous")
+
+
+df2$time <- factor(df2$time, levels = c("0.25","1","3","6","9","10"))
+
+heatmap <- ggplot(data = df2) +
+  geom_tile(aes( x =time, y = labels, fill = CPM, width=1, height=1), size = 0.95, colour = "white") +
+  facet_grid(process ~ MTreat, scales = "free", space = "free") +
+  theme(panel.background = element_blank()) +
+    scale_fill_gradientn(colours = pal, name = 'Scaled CPM') +
+  xlab("Time (h)") +
+  ylab("Gene") +
+   theme(axis.text.x = element_text(angle = 45, vjust = 0.8, hjust = 0.8, size = 15), axis.text.y = element_text(size = 12), strip.text = element_text(size = 15, family = "sans", ), axis.title = element_text(size = 18), legend.position="none", strip.text.y = element_text(angle = 0, hjust = 0), strip.background = element_blank()) 
+heatmap
+```
+
+> For supplementary figure, run script again with a different tab of the xlsx file. Note that for MT specific responses, the scaling is not performed on the MT*gene level (seperately for each MT for each gene) as is the case for the main figure, but on the gene level (for both MT) as otherwise the "non expressed" MT will get high values because of the scaling.

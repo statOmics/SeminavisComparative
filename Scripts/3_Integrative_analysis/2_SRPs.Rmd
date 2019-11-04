@@ -1,0 +1,406 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Equivalence testing for the SIP paper
+
+The goal is to select genes that are equivalent or not-expressed in one mating type and significant DE (with  the same cutoff value) in the other mating type.
+
+
+A more elegant way to perform TOST would be to use the Wald test that Koen and Lieven have been developing, but since it is still being worked on we will use the LRT of EdgeR for the SIP paper.
+
+For MT+, only the first 3 timepoints are checked if they are DE 
+
+
+The model formula of the SIP RNA-seq experiment with 3 timepoints is: 
+$$ log(Y_{i}) = \beta_{c0} + \beta_{c15}X_{c15} + \beta_{t15}X_{t15} + \beta_{c1}X_{c1} + \beta_{c1}X_{c1} + \beta_{c3}X_{c3} + \beta_{c3}X_{c3} $$
+
+# Equivalence analysis in MT-
+
+
+### loading libraries and data 
+
+```{r include = FALSE }
+library(edgeR) ; library(stageR) ; library(tximport) ; library(readr); library(xlsx) ; library(ggplot2) ; library(tidyr)
+
+wd <- getwd()
+dir <- dirname(dirname(wd))
+
+quantFilesSara = list.files(paste0(dir,"/Mapping_output_Salmon/Mapping_Moeys/"))
+load(paste0(dir,"/Metadata/tx2gene.rda"))
+
+## try http:// if https:// URLs are not supported
+dataSara = tximport(files=paste0(dir,"/Mapping_output_Salmon/Mapping_Moeys/",quantFilesSara,"/quant.sf"), type="salmon", txOut=FALSE, tx2gene=tx2gene, importer=read_tsv)
+countsSara=dataSara$counts
+colnames(countsSara) = quantFilesSara
+## sum counts across lanes for Sara's dataset.
+countsSara = countsSara[,seq(1,41,by=2)] + countsSara[,seq(2,42,by=2)]
+
+conditions <- read.delim(paste0(dir, "/Metadata/conditions_Moeys.txt"))
+rownames(conditions) <- unlist(lapply(strsplit(as.character(conditions$files),split="_"),function(x) paste(x[1:2],collapse = "_")))
+timeSara = conditions$time[match(colnames(countsSara),rownames(conditions))]
+timeSara = as.character(timeSara)
+timeSara[timeSara=="3h"] <- 3
+timeSara[timeSara=="1h"] <- 1
+timeSara[timeSara=="15m"] <- 0.25
+timeSara <- as.numeric(timeSara)
+treatSara = conditions$treatment[match(colnames(countsSara),rownames(conditions))]
+treatSara <- (c("t","c"))[as.numeric(treatSara)] #control-treatment coding as in Gust's experiment
+
+metaData = read.xlsx(paste0(dir, "/Metadata/metadata_Moeys.xlsx"), sheetIndex=1, rowIndex=1:22, colIndex=1:9, header=TRUE)
+metaData$UNIQUE.SAMPLE.NUMBER = as.character(metaData$UNIQUE.SAMPLE.NUMBER)
+metaData$UNIQUE.SAMPLE.NUMBER = sub(x=metaData$UNIQUE.SAMPLE.NUMBER ,pattern="[a-z]+",replacement="")
+metaData$UNIQUE.SAMPLE.NUMBER = as.numeric(metaData$UNIQUE.SAMPLE.NUMBER)
+conditions$lib=as.factor(paste("L",sapply(rownames(conditions),function(x) substr(strsplit(x,"_")[[1]][1],5,7)),sep=""))
+target1 = conditions[conditions$lane==1,]
+target1$lib = sub(x=target1$lib,pattern="L",replacement="")
+allData = merge(x=metaData, y=target1, by.x="UNIQUE.SAMPLE.NUMBER", by.y="lib")
+
+conditions$lib2 =  sub(x=conditions$lib,pattern="L",replacement="")
+matchID = match(x=conditions$lib2,table=allData$UNIQUE.SAMPLE.NUMBER)
+conditions$week = allData$SAMPLE.NAME[matchID]
+conditions$week = as.character(conditions$week)
+conditions$week = factor(as.numeric(sapply(1:length(conditions$week), function(i) substr(conditions$week[i],start=nchar(conditions$week[i]),stop=nchar(conditions$week[i])))))
+weekSara <- as.character(conditions$week[match(colnames(countsSara),rownames(conditions))])
+
+### Load data into DGElist object and then filter & normalizae
+d <- DGEList(countsSara)
+keep <- rowSums(cpm(d)>1)>=3
+dont_keep <- rowSums(cpm(d)>1)< 3
+low_expression <- names(dont_keep)[dont_keep]
+d <- d[keep,]
+table(keep)
+# normalization 
+d$samples$lib.size <- colSums(d$counts)
+d <- calcNormFactors(d)
+
+#### design matrix
+treatTime <- factor(paste0("t",timeSara,"_",treatSara))
+treatTime = relevel(treatTime,ref="t0_c")
+design <- model.matrix(~treatTime+weekSara)
+# Fitting the 'standard' model to extract the coefficients later
+d <- estimateDisp(d,design)
+plotBCV(d)
+fit <- glmFit(d,design)
+
+# Contrast matrix
+L <- matrix(0,nrow=ncol(fit$coefficients),ncol=3)
+dimnames(L) <- list(colnames(fit$coefficients),c("t15","t1","t3"))
+L[c("treatTimet0.25_t","treatTimet0.25_c"),1] <- c(1,-1)
+L[c("treatTimet1_t","treatTimet1_c"),2] <- c(1,-1)
+L[c("treatTimet3_t","treatTimet3_c"),3] <- c(1,-1)
+
+```
+
+```{r}
+# function that returns a data frame of equivalence p-values (unadjusted!) for the three contrasts at a given FC cutoff
+equivalence_test3 <- function(deltalog){
+  for (contrast_number in c(1,2,3)){
+    new_design <- contrastAsCoef(design, contrast = L[,contrast_number], first = TRUE)
+    new_design <- data.frame(new_design$design)
+    
+    y <- d
+    
+    # get original offsets (existing offset is used to correct for library size and RNA composition effect)
+    orig.offs <- getOffset(y)
+    # add log(cutoff value for FC) to the offset of the samples we want to compare: this will make that we don't test for Ha =!= 0, but Ha =!= FC_value (two sided). 
+    y$offset <- orig.offs + (deltalog)*new_design$C1
+    # refit model with adjusted offset
+    fit.up <- glmFit(y, new_design)
+    # LRT
+    lrt.up <- glmLRT(fit.up, coef = 1)
+    # other side
+    y$offset <- orig.offs - (deltalog)*new_design$C1
+    # refit model with adjusted offset
+    fit.down <- glmFit(y, new_design)
+    # LRT
+    lrt.down <- glmLRT(fit.down, coef = 1)
+    # tests were two-sided. convert to one-sided.
+    p.up <- ifelse(lrt.up$table$logFC < 0, lrt.up$table$PValue/2, 1)
+    p.down <- ifelse(lrt.down$table$logFC > 0, lrt.down$table$PValue/2, 1)
+    # get TOST p-value.
+    p.tost2 <- pmax(p.up, p.down)
+    
+    assign(paste0("genes_", contrast_number), p.tost2)
+  }
+  genes123 <- data.frame(rownames(d),genes_1, genes_2, genes_3)
+  colnames(genes123) <- c("gene_ID", "p_15", "p_1", "p_3")
+  
+  
+  # first apply FWER (Holm) to the contrasts
+  eq3_FWER <- data.frame(stringsAsFactors = F)
+  for (row in 1:nrow(genes123)){                     # this should be possible with apply but I couldn't let it work :(
+    eq3_FWER <- rbind(eq3_FWER, p.adjust(genes123[row,2:4], method = "holm"))
+  }
+  
+  rownames(eq3_FWER) <- genes123$gene_ID
+  colnames(eq3_FWER) <- colnames(eq3_FWER)[2:4]
+  
+  # select least significant contrast (t15,t1,t3)
+  max_eq3_FWER <- apply(eq3_FWER,1,max)
+  
+  # FDR correction on least significant contrast
+  max_eq3_FWER_FDR <- p.adjust(max_eq3_FWER, "fdr")
+  
+  sum(max_eq3_FWER_FDR <= 0.05)   # number of significant genes in all three timepoints 
+ 
+  
+  return(names(max_eq3_FWER_FDR[max_eq3_FWER_FDR <= 0.05]))
+}
+
+## Run the test
+
+delta <- 3
+deltalog <- log(delta)
+deltalog2 <- log2(delta)
+
+equiv3_LRT <- equivalence_test3(deltalog)
+
+```
+
+
+# Check results
+```{r}
+log2FcMatrix_min <-  as.data.frame(read.delim(paste0(dir,"/DE_matrices/log2_Fold_Changes_MT-_Moeys.txt"), header = TRUE, sep = "", row.names = 1, stringsAsFactors = FALSE))
+
+log2FC <- log2FcMatrix_min[rownames(log2FcMatrix_min) %in% equiv3_LRT,]
+
+log2FC <- data.frame( c(log2FC$t15, log2FC$t1, log2FC$t3), c(rep("T15", nrow(log2FC)), rep("T1", nrow(log2FC)), rep("T3", nrow(log2FC))))
+colnames(log2FC) <- c("log2FC", "tp")
+log2FC$tp <- factor(log2FC$tp, levels = unique(log2FC$tp))
+
+ggplot(data = log2FC) +
+    geom_jitter(aes(x = 1, y = log2FC), size = 1, alpha = 0.30) +
+    geom_hline(aes(yintercept = 0), size= 1, linetype = "dashed", color = "red") +
+  geom_hline(aes(yintercept = deltalog2), size = 0.5, color = "red")+
+  geom_hline(aes(yintercept = -deltalog2), size = 0.5, color = "red") +
+   xlab("") +
+   ylab("Log2(FC)") + 
+  theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
+ facet_grid(~ tp, scales='free', space = "free_x") +
+  theme_bw() +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) +
+  scale_x_continuous(breaks = c(1)) +
+  scale_y_continuous(breaks = c(-1,0,1))
+
+ggplot(data = log2FC) +
+    geom_violin(aes(x = 1, y = log2FC), size = 1, fill = "cyan4") +
+    geom_hline(aes(yintercept = 0), size= 1, linetype = "dashed", color = "white") +
+  geom_hline(aes(yintercept = deltalog2), size = 0.5, color = "red")+
+  geom_hline(aes(yintercept = -deltalog2), size = 0.5, color = "red") +
+   xlab("") +
+   ylab("Log2(FC)") + 
+  theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
+ facet_grid(~ tp, scales='free', space = "free_x") +
+  theme_bw()+
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) +
+  scale_x_continuous(breaks = c(1)) +
+  scale_y_continuous(breaks = c(-1,0,1))
+```
+
+
+###  Exporting "non-responsive" genes to take to the other mating type
+
+Non-responsive genes are: (1) "low expression genes" (filtered) (2) genes equivalent at all three tp for FC cutoff x
+```{r}
+non_responsive <- data.frame(c(low_expression, equiv3_LRT), c(rep("filtered", length(low_expression)), rep("equivalent", length(equiv3_LRT))))
+colnames(non_responsive) <- c("gene_ID","type")
+```
+
+# Analysis of DE in MT+
+
+Now we switch to MT+ and look which of the genes in 'non-responsive' are significantly DE (>< FC cutoff). 
+
+
+### Load data
+
+```{r include = FALSE}
+wd <- getwd()
+dir <- dirname(dirname(wd))
+
+quantFiles = list.files(paste0(dir,"/Mapping_output_Salmon/Mapping_MT+/"))
+
+load(paste0(dir,"/Metadata/tx2gene.rda"))
+data = tximport(files=paste0(dir,"/Mapping_output_Salmon/Mapping_MT+/",quantFiles,"/quant.sf"), type="salmon", txOut=FALSE, tx2gene=tx2gene, importer=read_tsv)
+countsGust=data$counts
+colnames(countsGust)=quantFiles
+colnames(countsGust)[29] <- "3c0a" #was misnamed 
+
+## remove technical replicate from run 2
+countsGust <- countsGust[,!colnames(countsGust)%in%"1c0a2"]
+ # Load data
+d <- DGEList(countsGust)
+ # filter on cpm
+keep <- rowSums(cpm(d)>1)>=3
+dont_keep <- rowSums(cpm(d)>1)< 3
+low_expression <- names(dont_keep)[dont_keep]
+d <- d[keep,]
+table(keep) # number of genes after filtering on cpm 
+ # normalization 
+d$samples$lib.size <- colSums(d$counts)
+d <- calcNormFactors(d)
+ ### Design:
+week=substr(colnames(d),1,1)
+treat=substr(colnames(d),2,2)
+time=substr(colnames(d),3,nchar(colnames(d))-1)
+treatTime=factor(paste0(treat,"_",time))
+run=factor(
+    c(1, #1c0a
+      1, #1c15a
+      1, #1c1b
+      1, #1c3b
+      1, #1c6b
+      1, #1c9b
+      1, #1t15a
+      1, #1t1a
+      1, #1t3b
+      1, #1t6b
+      1, #1t9b
+      2, #2c0b
+      2, #2c15a
+      1, #2c15b
+      2, #2c1a
+      2, #2c3b
+      2, #2c6a
+      2, #2c9b
+      2, #2t15a
+      2, #2t1a
+      2, #2t3a
+      2, #2t6b
+      2, #2t9a
+      2, #3c1b
+      1, #3c3a
+      2, #3c6c
+      1, #3c9c
+      2, #3c0a
+      1, #3t15c
+      2, #3t1c
+      1, #3t3a
+      2, #3t6b
+      1)) #3t9a
+
+design <- model.matrix(~treatTime+week+run,contrasts.arg=list(week=contr.sum, run=contr.sum))
+rownames(design) <- colnames(d)
+
+```
+
+
+### filtering (1) non-responsive genes MT+, then (2) cpm >1
+
+```{r}
+
+#(1) filter non-responsive genes
+d <- d[rownames(d$counts) %in% non_responsive$gene_ID,]
+nrow(d$counts) # number of genes after filtering of MT+ non-responsive genes
+
+#(2) filter on cpm
+keep <- rowSums(cpm(d)>1)>=3
+d <- d[keep,]
+nrow(d$counts) # number of genes after filtering on cpm 
+
+# normalization 
+d$samples$lib.size <- colSums(d$counts)
+d <- calcNormFactors(d)
+
+# Fit normal model without reparametrization
+d <- estimateDisp(d,design)
+plotBCV(d)
+
+# fit model (based on the design factors and negative binomial dispersions, this will fit the negative binomial model through every level)
+fit <- glmFit(d,design)
+
+## check if the residuals follow a negative binomial distribution (Q-Q plot)
+gofStat <- gof(fit,plot=TRUE)
+
+## contrast matrix  (contrasts are used to determine which factors from the design matrix to compare, i.e. is the difference in coefficient significantly different from zero instead of 'is the coefficient different from zero', in this case compare treat vs control for every timepoint)
+
+ ### Contrast matrix for only t15,t1 and t3
+L=matrix(0,nrow=ncol(coef(fit)),ncol=3)
+rownames(L)=colnames(coef(fit))
+colnames(L)=c("t15","t1","t3")
+L[c(7,2)+1,1] <- c(1,-1) #t15
+L[c(6,1)+1,2] <- c(1,-1) #t1
+L[c(8,3)+1,3] <- c(1,-1) #t3
+```
+
+
+
+
+### GLMtreat in MT+
+Stagewise testing with P-value aggregation with the Sidak method
+
+```{r}
+library(aggregation)
+
+logFcMatrix <-  as.data.frame(read.delim(paste0(dir,"/DE_matrices/log2_Fold_Changes_MT+.txt"), header = TRUE, sep = "", row.names = 1, stringsAsFactors = FALSE))
+
+tr15 <- glmTreat(fit, contrast = as.data.frame(L)$t15, lfc= deltalog2)
+tr1 <- glmTreat(fit, contrast = as.data.frame(L)$t1, lfc= deltalog2)
+tr3 <- glmTreat(fit, contrast = as.data.frame(L)$t3, lfc= deltalog2)
+
+# Aggregate p-values
+all_p_tr <- data.frame(tr15$table$PValue, tr1$table$PValue, tr3$table$PValue)
+colnames(all_p_tr) <- c("t15", "t1", "t3")
+rownames(all_p_tr) <- rownames(tr15)
+
+p_screening_tr <- apply(all_p_tr, 1, function(x) sidak(x))
+names(p_screening_tr) <- rownames(tr15)
+p_confirmation_tr <- as.matrix(all_p_tr)
+
+stageRobj_tr <- stageR(pConfirmation = p_confirmation_tr, pScreen = p_screening_tr)
+stageRobj2_tr <- stageWiseAdjustment(object = stageRobj_tr, method = "holm", alpha = 0.05)
+
+res_tr <- as.data.frame(getResults(stageRobj2_tr))
+
+sign_ML <- res_tr[res_tr$padjScreen == 1,]
+
+names <- rownames(res_tr[res_tr$padjScreen == 1,])
+
+table(non_responsive$type[non_responsive$gene_ID %in% names])
+
+
+logFC_ML <- logFcMatrix[rownames(logFcMatrix) %in% names,]
+
+res <- res_tr[res_tr$padjScreen == 1, 2:4]
+logFC <- logFC_ML[,1:3] 
+
+dir <- logFC*res
+
+upDown <- function(value){
+if (value > 0) {
+  return("up")
+} 
+if (value == 0) {
+  return("")
+} 
+else {
+  return("down")
+}
+}
+
+upD15 <- sapply(dir$t15, function(x) upDown(x))
+upD1 <- sapply(dir$t1, function(x) upDown(x))
+upD3 <- sapply(dir$t3, function(x) upDown(x))
+
+out <- data.frame(names, upD15, upD1, upD3)
+out$upDall <- paste0(out$upD15, out$upD1, out$upD3 )
+
+out$upDall[out$upDall== "upup"] <- "up"
+out$upDall[out$upDall== "upupup"] <- "up"
+
+out$upDall[out$upDall== "downdown"] <- "down"
+out$upDall[out$upDall== "downdowndown"] <- "down"
+
+out
+
+```
+
+> As all "non-responsive" genes belong to the "filtered" (non expressed) class, we cannot plot their FC. Alternatively we could plot the filtered genes as having a log2FC of "0" (see Figure 4 of the paper)
+
+
+

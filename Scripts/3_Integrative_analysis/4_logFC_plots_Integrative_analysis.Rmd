@@ -1,0 +1,238 @@
+---
+title: "Untitled"
+author: "Gust Bilcke"
+date: "20 december 2018"
+output: html_document
+---
+
+# Plotting FC plots for meta-analysis
+
+Loading FCs 
+```{r}
+
+wd <- getwd()
+dir <- dirname(dirname(wd))
+
+logFcMatrix_min <-  as.data.frame(read.delim(paste0(dir,"/DE_matrices/log2_Fold_Changes_MT-_Moeys.txt"), header = TRUE, sep = "", row.names = 1, stringsAsFactors = FALSE))
+logFcMatrix_plus <-  as.data.frame(read.delim(paste0(dir,"/DE_matrices/log2_Fold_Changes_MT+.txt"), header = TRUE, sep = "", row.names = 1, stringsAsFactors = FALSE))[1:3]
+
+adjP_plus <- read.delim(paste0(dir, "/DE_matrices/Adjusted_P_values_MT+.txt"), sep = "", stringsAsFactors = F)
+adjP_min <- read.delim(paste0(dir, "/DE_matrices/Adjusted_P_values_MT-_Moeys.txt"), sep = "", stringsAsFactors = F)
+
+res_plus <-  read.delim("Significance_matrices_for_plotting/res_tr_PLUS.txt", sep ="")
+res_min <-  read.delim("Significance_matrices_for_plotting/res_tr_MIN.txt", sep = "")
+
+SRB <- as.character(read.xlsx(paste0(dir, "/Scripts/3_Integrative_analysis/SIP responsive genes complete list.xlsx"), sheetIndex = 1)$Gene_ID[1:52])
+SRM <- as.character(read.xlsx(paste0(dir, "/Scripts/3_Integrative_analysis/SIP responsive genes complete list.xlsx"), sheetIndex = 2)$Gene_ID[1:70])
+SRP <- as.character(read.xlsx(paste0(dir, "/Scripts/3_Integrative_analysis/SIP responsive genes complete list.xlsx"), sheetIndex = 3)$Gene_ID[1:12])
+
+```
+
+
+Plotting MT-_DE_MT+_Eq
+```{r}
+library(tidyr)
+library(ggplot2)
+
+names <- SRM
+
+deltalog2 <- log2(3)
+genes <- res_min[names,]
+rownames(genes) <- names
+
+logFC_PLUS <- logFcMatrix_plus[rownames(logFcMatrix_plus) %in% names,]
+logFC_PLUS$filtered <- "no"
+
+filtered <- names[!(names %in% rownames(logFcMatrix_plus))]
+filtered_DF <- data.frame(filtered, 0,0, 0, "yes")
+rownames(filtered_DF) <- filtered_DF[,1]
+filtered_DF <- filtered_DF[-1]
+colnames(filtered_DF) <- colnames(logFC_PLUS)
+logFC_PLUS <- rbind(logFC_PLUS, filtered_DF)
+
+logFC_PLUS2 <- gather(logFC_PLUS, timepoint, log2FC, 1:3)
+logFC_PLUS2$gene_ID <- rep(rownames(logFC_PLUS),3)
+logFC_PLUS2$MT <- "MT+"
+logFC_PLUS2$significant <- 1
+
+logFC_PLUS2 <- logFC_PLUS2[order(logFC_PLUS2$filtered, decreasing = T),]
+
+## MT-
+logFC_min <- logFcMatrix_min[rownames(logFcMatrix_min) %in% names,]
+
+logFC_min$filtered <- "no"
+
+logFC_PLUS2_min <- gather(logFC_min, timepoint, log2FC, 1:3)
+logFC_PLUS2_min$gene_ID <- rep(rownames(logFC_min),3)
+logFC_PLUS2_min$MT <- "MT-"
+genesmin <- genes[unique(logFC_PLUS2_min$gene_ID),]
+
+logFC_PLUS2_min$significant <- c(genesmin$t15, genesmin$t1, genesmin$t3)
+
+
+
+## Both
+both <- rbind(logFC_PLUS2, logFC_PLUS2_min)
+both <- both[both$significant == 1,]
+
+both$timepoint[both$timepoint == "t15"] <- "15min"
+both$timepoint[both$timepoint == "t1"] <- "1h"
+both$timepoint[both$timepoint == "t3"] <- "3h"
+
+both$MT <- relevel(as.factor(both$MT), "MT+")
+both$timepoint <- relevel(as.factor(both$timepoint), "15min")
+
+both_min <- both
+
+DE_MIN <- ggplot() +
+     geom_jitter(aes(y = (both_min$log2FC), x = both_min$timepoint, fill = both_min$MT, shape = both_min$filtered),  size = 1.2,  width = 0.2, height = 0, stroke = 0.6) +
+     geom_hline(yintercept=(deltalog2), color = "firebrick3") +
+     geom_hline(yintercept=-(deltalog2), color = "firebrick3") +
+     xlab("Time point") +
+     ylab("log2(FC)") +
+   labs(fill = "Mating Type") +
+  guides(shape=FALSE, fill = guide_legend(override.aes = list(shape = 21, size = 3))) +
+    scale_shape_manual(values=c(21,23)) +
+  scale_fill_manual(values = c("#b83c3c", "#4877c1")) +
+  theme_bw() +
+ ggtitle("SRMs") + theme(plot.title = element_text(colour = "#024399", size = 17)) +
+   theme(plot.title = element_text(hjust = 0.5), legend.position = "bottom")+
+  coord_cartesian(ylim = c(-11,11)) +
+    theme(legend.title=element_text(size=13),     legend.text=element_text(size=13), legend.margin=margin(c(0,0,0,0))) 
+
+DE_MIN
+```
+
+
+
+Plotting MT-_DE_MT+_Eq
+```{r}
+deltalog2 <- log2(3)
+names <- SRP
+genes <- res_plus[names,]
+rownames(genes) <- names
+
+## MT-
+logFC_min <- logFcMatrix_min[names,]
+logFC_min$filtered <- "no"
+
+filtered <- names[!(names %in% rownames(logFcMatrix_min))]
+filtered_DF <- data.frame(filtered, 0,0, 0, "yes")
+rownames(filtered_DF) <- filtered_DF[,1]
+filtered_DF <- filtered_DF[-1]
+colnames(filtered_DF) <- colnames(logFC_min)
+logFC_min <- rbind(logFC_min, filtered_DF)
+
+logFC_min2 <- gather(logFC_min, timepoint, log2FC, 1:3)
+logFC_min2$gene_ID <- rep(rownames(logFC_min),3)
+logFC_min2$MT <- "MT-"
+logFC_min2$significant <- 1
+
+logFC_min2 <- logFC_min2[order(logFC_min2$filtered, decreasing = T),]
+
+## MT+
+logFC_plus <- logFcMatrix_plus[names,]
+
+logFC_plus$filtered <- "no"
+
+logFC_PLUS2 <- gather(logFC_plus, timepoint, log2FC, 1:3)
+logFC_PLUS2$gene_ID <- rep(rownames(logFC_plus),3)
+logFC_PLUS2$MT <- "MT+"
+logFC_PLUS2$significant <- c(genes$t15, genes$t1, genes$t3)
+
+
+
+
+## Both
+both <- rbind(logFC_PLUS2, logFC_min2)
+both <- both[both$significant == 1,]
+
+
+both$MT <- relevel(as.factor(both$MT), "MT+")
+
+both$timepoint[both$timepoint == "t15"] <- "15min"
+both$timepoint[both$timepoint == "t1"] <- "1h"
+both$timepoint[both$timepoint == "t3"] <- "3h"
+
+both$timepoint <- relevel(as.factor(both$timepoint), "15min")
+
+both_plus <- both
+
+
+DE_PLUS <- ggplot() +
+     geom_jitter(aes(y = (both_plus$log2FC), x = both_plus$timepoint, fill = both_plus$MT, shape = both_plus$filtered),  size = 1.2,  width = 0.2, height = 0, stroke = 0.6) +
+     geom_hline(yintercept=(deltalog2), color = "firebrick3") +
+     geom_hline(yintercept=-(deltalog2), color = "firebrick3") +
+     xlab("Time point") +
+     ylab("log2(FC)") +
+   labs(fill = "Mating Type") +
+  guides(shape=FALSE, fill = guide_legend(override.aes = list(shape = 21))) +
+    scale_shape_manual(values=c(21,23)) +
+  theme_bw() +
+ggtitle("SRPs") + theme(plot.title = element_text(colour = "#B83C3C", size = 17)) +
+   theme(plot.title = element_text(hjust = 0.5)) +
+    scale_fill_manual(values = c("#b83c3c", "#4877c1")) +
+  coord_cartesian(ylim = c(-11,11))
+DE_PLUS
+```
+Plotting both
+
+```{r}
+
+# Loading other significance matrices from the "both" analysis
+res_plus <- read.delim("Significance_matrices_for_plotting/SRB_resPlus.txt", sep = "")
+res_min <-  read.delim("Significance_matrices_for_plotting/SRB_resMin.txt", sep = "")
+
+deltalog2 <- log2(3)
+names <- SRB
+
+## MT+
+genes_PLUS <- res_plus[names,]
+rownames(genes_PLUS) <- names
+logFC_plus <- logFcMatrix_plus[names,]
+logFC_PLUS2 <- gather(logFC_plus, timepoint, log2FC, 1:3)
+logFC_PLUS2$gene_ID <- rep(rownames(logFC_plus),3)
+logFC_PLUS2$MT <- "MT+"
+logFC_PLUS2$significant <- c(genes_PLUS$t15, genes_PLUS$t1, genes_PLUS$t3)
+
+## MT-
+genes_MIN <- res_min[names,]
+rownames(genes_MIN) <- names
+logFC_MIN <- logFcMatrix_min[names,]
+logFC_MIN2 <- gather(logFC_MIN, timepoint, log2FC, 1:3)
+logFC_MIN2$gene_ID <- rep(rownames(logFC_MIN),3)
+logFC_MIN2$MT <- "MT-"
+logFC_MIN2$significant <- c(genes_MIN$t15, genes_MIN$t1, genes_MIN$t3)
+
+
+## Both
+both <- rbind(logFC_PLUS2, logFC_MIN2)
+both <- both[both$significant == 1,]
+
+both$MT <- relevel(as.factor(both$MT), "MT+")
+
+both$timepoint[both$timepoint == "t15"] <- "15min"
+both$timepoint[both$timepoint == "t1"] <- "1h"
+both$timepoint[both$timepoint == "t3"] <- "3h"
+
+both$timepoint <- factor(both$timepoint, levels = c("15min", "1h", "3h"))
+
+
+DE_BOTH <- ggplot() +
+     geom_jitter(aes(y = (both_both$log2FC), x = both_both$timepoint, fill = both_both$MT),  shape = 21, size = 1.2,  width = 0.2, height = 0, stroke = 0.6) +
+     geom_hline(yintercept=(deltalog2), color = "firebrick3") +
+     geom_hline(yintercept=-(deltalog2), color = "firebrick3") +
+     xlab("Time point") +
+     ylab("log2(FC)") +
+   labs(fill = "Mating Type") +
+  guides( fill = guide_legend(override.aes = list(shape = 21))) +
+  theme_bw() +
+  ggtitle("SRBs") + theme(plot.title = element_text(size = 17)) +
+   theme(plot.title = element_text(hjust = 0.5)) +
+    scale_fill_manual(values = c("#b83c3c", "#4877c1")) +
+  scale_x_discrete(breaks = c("15min", "1h", "3h"), labels = c("15min", "1h", "3h"), drop = F) +
+  coord_cartesian(ylim = c(-11,11))
+
+
+```
+
