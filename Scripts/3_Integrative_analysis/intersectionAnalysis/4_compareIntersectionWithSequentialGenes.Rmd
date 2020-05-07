@@ -1,0 +1,56 @@
+---
+title: "Intersection vs sequential analysis"
+author: "Koen Van den Berge"
+date: "10/17/2019"
+output: html_document
+---
+
+```{r}
+library(UpSetR)
+dir <- dirname(dirname(dirname(getwd())))
+```
+
+
+# SRM
+
+```{r}
+sequentialSRM <- xlsx::read.xlsx(paste0(dir,"/Scripts/3_Integrative_analysis/SIP responsive genes complete list.xlsx"),
+                sheetIndex = 2, endRow = 71)
+seqSRMGenes <- as.character(sequentialSRM$Gene_ID)
+interSRM <- as.character(read.table(paste0(dir,"/Scripts/3_Integrative_analysis/intersectionAnalysis/intersectionSRMGenes.txt"))[,1])
+
+upset(fromList(list(sequential=seqSRMGenes, intersection=interSRM)))
+
+genesLostSRM <- seqSRMGenes[!seqSRMGenes %in% interSRM]
+genesLostSRM
+```
+
+
+# SRP
+
+```{r}
+sequentialSRP <- xlsx::read.xlsx(paste0(dir,"/Scripts/3_Integrative_analysis/SIP responsive genes complete list.xlsx"),
+                sheetIndex = 3, endRow=13)
+seqSRPGenes <- as.character(sequentialSRP$Gene_ID)
+interSRP <- as.character(read.table(paste0(dir,"/Scripts/3_Integrative_analysis/intersectionAnalysis/intersectionSRPGenes.txt"))[,1])
+
+upset(fromList(list(sequential=seqSRPGenes, intersection=interSRP)))
+
+genesLostSRP <- seqSRPGenes[!seqSRPGenes %in% interSRP]
+genesLostSRP
+```
+
+# SRB
+
+```{r}
+sequentialSRB <- xlsx::read.xlsx(paste0(dir,"/Scripts/3_Integrative_analysis/SIP responsive genes complete list.xlsx"),
+                sheetIndex = 1, endRow=53)
+seqSRBGenes <- as.character(sequentialSRB$Gene_ID)
+interSRB <- as.character(read.table(paste0(dir,"/Scripts/3_Integrative_analysis/intersectionAnalysis/intersectionBothGenes.txt"))[,1])
+
+upset(fromList(list(sequential=seqSRBGenes, intersection=interSRB)))
+
+genesLostSRB <- seqSRBGenes[!seqSRBGenes %in% interSRB]
+genesLostSRB
+```
+

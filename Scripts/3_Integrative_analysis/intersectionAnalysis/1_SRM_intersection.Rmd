@@ -16,10 +16,10 @@ $$ log(\hat{Y}f_{i}) = \beta_{c0} + \beta_{c15}X_{c15} + \beta_{t15}X_{t15} + \b
 ### Load data
 
 ```{r include = FALSE}
-library(edgeR) ; library(stageR) ; library(tximport) ; library(readr); library(ggplot2);library(tidyr)
+library(edgeR) ; library(stageR) ; library(tximport) ; library(readr); library(ggplot2);library(tidyr) ; library(openxlsx)
 
 wd <- getwd()
-dir <- dirname(dirname(wd))
+dir <- dirname(dirname(dirname(wd)))
 
 quantFiles = list.files(paste0(dir,"/Mapping_output_Salmon/Mapping_MT+/"))
 
@@ -220,7 +220,7 @@ Now we switch to MT- and look which of the genes in 'non-responsive' are signifi
 ### loading libraries and data 
 ```{r include = FALSE }
 wd <- getwd()
-dir <- dirname(dirname(wd))
+dir <- dirname(dirname(dirname(wd)))
 
 quantFilesSara = list.files(paste0(dir,"/Mapping_output_Salmon/Mapping_Moeys/"))
 load(paste0(dir,"/Metadata/tx2gene.rda"))
@@ -243,7 +243,7 @@ timeSara <- as.numeric(timeSara)
 treatSara = conditions$treatment[match(colnames(countsSara),rownames(conditions))]
 treatSara <- (c("t","c"))[as.numeric(treatSara)] #control-treatment coding as in Gust's experiment
 
-metaData = read.xlsx(paste0(dir, "/Metadata/metadata_Moeys.xlsx"), sheetIndex=1, rowIndex=1:22, colIndex=1:9, header=TRUE)
+metaData = xlsx::read.xlsx(paste0(dir, "/Metadata/metadata_Moeys.xlsx"), sheetIndex=1, rowIndex=1:22, colIndex=1:9, header=TRUE)
 metaData$UNIQUE.SAMPLE.NUMBER = as.character(metaData$UNIQUE.SAMPLE.NUMBER)
 metaData$UNIQUE.SAMPLE.NUMBER = sub(x=metaData$UNIQUE.SAMPLE.NUMBER ,pattern="[a-z]+",replacement="")
 metaData$UNIQUE.SAMPLE.NUMBER = as.numeric(metaData$UNIQUE.SAMPLE.NUMBER)
@@ -270,9 +270,10 @@ design <- model.matrix(~treatTime+weekSara)
 ```{r}
 d <- DGEList(countsSara)
 
+### COMMENTED OUT FOR INTERSECTION.
 #(1) filter non-responsive genes
-d <- d[rownames(d$counts) %in% non_responsive$gene_ID,]
-nrow(d$counts) # number of genes after filtering of MT+ non-responsive genes
+# d <- d[rownames(d$counts) %in% non_responsive$gene_ID,]
+# nrow(d$counts) # number of genes after filtering of MT+ non-responsive genes
 
 #(2) filter on cpm
 keep <- rowSums(cpm(d)>1)>=3
@@ -373,9 +374,20 @@ out$upDall[out$upDall== "downdown"] <- "down"
 out$upDall[out$upDall== "downdowndown"] <- "down"
 
 out
-
-
 ```
+
+## Intersection between MT+ and MT- results
+
+```{r}
+minGenes <- as.character(out$names)
+plusGenes <- as.character(non_responsive$gene_ID)
+interGenes <- intersect(minGenes, plusGenes)
+write.table(interGenes, file="intersectionSRMGenes.txt", quote=FALSE, row.names = FALSE, col.names = FALSE)
+```
+
+
+
+
 
 ### Plotting results for validation
 

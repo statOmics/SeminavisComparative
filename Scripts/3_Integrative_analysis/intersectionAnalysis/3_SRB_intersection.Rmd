@@ -14,7 +14,7 @@ This script will look for genes that are DE from the delta FC cutoff in both MT+
 library(edgeR) ; library(stageR) ; library(tximport) ; library(readr); library(xlsx) ; library(ggplot2) ; library(tidyr)
 
 wd <- getwd()
-dir <- dirname(dirname(wd))
+dir <- dirname(dirname(dirname(wd)))
 
 quantFilesSara = list.files(paste0(dir,"/Mapping_output_Salmon/Mapping_Moeys/"))
 load(paste0(dir,"/Metadata/tx2gene.rda"))
@@ -154,6 +154,8 @@ stageRobj2_tr_min <- stageWiseAdjustment(object = stageRobj_tr_min, method = "ho
 res_tr_min <- as.data.frame(getResults(stageRobj2_tr_min))
 
 colSums(res_tr_min)
+
+minGenes <- rownames(res_tr_min)[res_tr_min[,1] == 1]
 ```
 
 
@@ -166,7 +168,7 @@ library(ggplot2)
 library(tidyr)
 
 wd <- getwd()
-dir <- dirname(dirname(wd))
+dir <- dirname(dirname(dirname(wd)))
 
 quantFiles = list.files(paste0(dir,"/Mapping_output_Salmon/Mapping_MT+/"))
 
@@ -265,38 +267,35 @@ L[c(8,3)+1,3] <- c(1,-1) #t3
 ```
 
 
-# FDR controlled SRBs
-
-## MT- to MT+
-
 ```{r}
-minGenes <- rownames(res_tr_min)[res_tr_min$padjScreen == 1]
-minGenes <- intersect(minGenes,rownames(fit))
-
-# Test only genes withheld in the first stage (DE in MT-)
-tr15 <- glmTreat(fitPlus[minGenes,], contrast = as.data.frame(L)$t15, lfc= log2(3))
-tr1 <- glmTreat(fitPlus[minGenes,], contrast = as.data.frame(L)$t1, lfc= log2(3))
-tr3 <- glmTreat(fitPlus[minGenes,], contrast = as.data.frame(L)$t3, lfc= log2(3))
+# Test all genes
+tr15 <- glmTreat(fitPlus, contrast = as.data.frame(L)$t15, lfc= log2(3))
+tr1 <- glmTreat(fitPlus, contrast = as.data.frame(L)$t1, lfc= log2(3))
+tr3 <- glmTreat(fitPlus, contrast = as.data.frame(L)$t3, lfc= log2(3))
 
 # Aggregate p-values
-allPMinToPlus <- data.frame(tr15$table$PValue, tr1$table$PValue, tr3$table$PValue)
-colnames(allPMinToPlus) <- c("t15", "t1", "t3")
-rownames(allPMinToPlus) <- rownames(tr15)
+allPPlus <- data.frame(tr15$table$PValue, tr1$table$PValue, tr3$table$PValue)
+colnames(allPPlus) <- c("t15", "t1", "t3")
+rownames(allPPlus) <- rownames(tr15)
 
-pScreenMinToPlus <- apply(allPMinToPlus, 1, function(x) sidak(x))
-names(pScreenMinToPlus) <- rownames(tr15)
-pConfirmationMinToPlus <- as.matrix(allPMinToPlus)
+pScreenPlus <- apply(allPPlus, 1, function(x) sidak(x))
+names(pScreenPlus) <- rownames(tr15)
+pConfirmationPlus <- as.matrix(allPPlus)
 
-objMinToPlus <- stageR(pConfirmation = pConfirmationMinToPlus, pScreen = pScreenMinToPlus)
-objMinToPlus <- stageWiseAdjustment(object = objMinToPlus, method = "holm", alpha = 0.05)
+objPlus <- stageR(pConfirmation = pConfirmationPlus, pScreen = pScreenPlus)
+objPlus <- stageWiseAdjustment(object = objPlus, method = "holm", alpha = 0.05)
 
-resMinToPlus <- as.data.frame(getResults(objMinToPlus))
-colSums(resMinToPlus)
-minToPlusGenes <- rownames(resMinToPlus)[resMinToPlus[,1]==1]
-
-minToPlusGenes
+resPlus <- as.data.frame(getResults(objPlus))
+colSums(resPlus)
+plusGenes <- rownames(resPlus)[resPlus[,1]==1]
 ```
 
+# Intersection
+
+```{r}
+bothGenes <- intersect(plusGenes, minGenes)
+write.table(bothGenes, file="intersectionBothGenes.txt", row.names=FALSE, col.names=FALSE, quote=FALSE)
+```
 
 
 
